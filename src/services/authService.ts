@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/auth';
 import { sendZapierEvent } from './zapierService';
@@ -64,6 +63,20 @@ export const signUpUser = async (
 
       if (roleError) {
         console.error("Error adding user role:", roleError);
+        
+        // Xóa người dùng đã tạo vì không thể thêm vai trò
+        if (data.user) {
+          try {
+            // Admin function to delete the user - but this won't work with client API
+            // Thay vào đó, đăng xuất và ném lỗi
+            await supabase.auth.signOut();
+            throw roleError;
+          } catch (deleteError) {
+            console.error("Error during user cleanup:", deleteError);
+            throw roleError;
+          }
+        }
+        
         throw roleError;
       }
       
@@ -79,7 +92,9 @@ export const signUpUser = async (
           
         if (profileError) {
           console.error("Error creating candidate profile:", profileError);
-          // Non-critical error, don't throw
+          // Đăng xuất và ném lỗi khi không thể tạo profile
+          await supabase.auth.signOut();
+          throw profileError;
         }
       } else if (role === 'employer') {
         // Create company profile
@@ -92,7 +107,9 @@ export const signUpUser = async (
           
         if (companyError) {
           console.error("Error creating company profile:", companyError);
-          // Non-critical error, don't throw
+          // Đăng xuất và ném lỗi khi không thể tạo profile
+          await supabase.auth.signOut();
+          throw companyError;
         }
       }
       
@@ -114,6 +131,8 @@ export const signUpUser = async (
     return data;
   } catch (error) {
     console.error("Sign up error:", error);
+    // Đảm bảo người dùng được đăng xuất nếu có lỗi
+    await supabase.auth.signOut();
     throw error;
   }
 };

@@ -56,28 +56,50 @@ export const useAuthProvider = () => {
       const result = await signUpUser(email, password, fullName, role);
       console.log("Sign up result:", result);
       
-      if (result.user) {
+      // Kiểm tra lại session sau khi đăng ký để đảm bảo đăng ký thành công và đủ thông tin
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      
+      if (session?.user) {
+        // Kiểm tra xem vai trò có được tạo thành công không
+        const userRole = await fetchUserRole(session.user.id);
+        
+        if (!userRole) {
+          // Nếu không có vai trò, đăng xuất và thông báo lỗi
+          await supabase.auth.signOut();
+          setUser(null);
+          setUserRole(null);
+          toast({
+            title: "Đăng ký thất bại",
+            description: "Không thể tạo thông tin người dùng, vui lòng thử lại sau.",
+            variant: "destructive",
+          });
+          throw new Error("Failed to create user role");
+        }
+        
         toast({
           title: "Đăng ký thành công!",
           description: "Bạn đã đăng ký thành công.",
         });
         
-        // If email confirmation is disabled, user will be signed in automatically
-        if (result.session) {
-          navigate('/');
-        } else {
-          // With email confirmation, show a message
-          toast({
-            title: "Xác nhận email",
-            description: "Vui lòng kiểm tra email để xác nhận tài khoản.",
-          });
-          navigate('/auth'); // Redirect to login page
-        }
+        navigate('/');
+      } else {
+        // Nếu không có session, hiển thị thông báo về xác nhận email
+        toast({
+          title: "Xác nhận email",
+          description: "Vui lòng kiểm tra email để xác nhận tài khoản.",
+        });
+        navigate('/auth'); // Redirect to login page
       }
       
       return result;
     } catch (error: any) {
       console.error("Error during sign up:", error);
+      
+      // Đảm bảo đăng xuất nếu có lỗi
+      await supabase.auth.signOut();
+      setUser(null);
+      setUserRole(null);
       
       let errorMessage = "Đăng ký thất bại. Vui lòng thử lại.";
       
@@ -86,6 +108,8 @@ export const useAuthProvider = () => {
         errorMessage = "Email này đã được sử dụng, vui lòng sử dụng email khác.";
       } else if (error.message.includes("password")) {
         errorMessage = "Mật khẩu không đáp ứng yêu cầu bảo mật.";
+      } else if (error.message.includes("row-level security policy")) {
+        errorMessage = "Lỗi cấu hình bảo mật, vui lòng liên hệ quản trị viên.";
       }
       
       toast({
