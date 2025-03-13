@@ -10,6 +10,7 @@ import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import Companies from "./pages/Companies";
 import CompanyDetail from "./pages/CompanyDetail";
+import ApplicationTracker from "./pages/ApplicationTracker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/jobs/:id" element={<JobDetail />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/companies/:id" element={<CompanyDetail />} />
+            <Route path="/application-tracker" element={<ApplicationTracker />} />
             <Route path="/blog" element={<Index />} />
             <Route path="/about" element={<Index />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -16,7 +16,17 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Link } from 'react-router-dom';
 
 const formSchema = z.object({
   fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
@@ -35,6 +45,8 @@ interface JobApplicationFormProps {
 
 const JobApplicationForm = ({ jobId, onSuccess }: JobApplicationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -60,12 +72,18 @@ const JobApplicationForm = ({ jobId, onSuccess }: JobApplicationFormProps) => {
         cover_letter: data.coverLetter,
       };
       
-      const { error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from('job_applications')
-        .insert([applicationData]);
+        .insert([applicationData])
+        .select();
       
       if (error) throw error;
       
+      if (insertedData && insertedData.length > 0) {
+        setApplicationId(insertedData[0].id);
+      }
+      
+      setSubmitted(true);
       form.reset();
       
       if (onSuccess) {
@@ -83,6 +101,37 @@ const JobApplicationForm = ({ jobId, onSuccess }: JobApplicationFormProps) => {
       setIsSubmitting(false);
     }
   };
+  
+  if (submitted) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="text-green-500 h-6 w-6" />
+            <CardTitle>Đơn ứng tuyển đã được gửi!</CardTitle>
+          </div>
+          <CardDescription>
+            Cảm ơn bạn đã nộp đơn ứng tuyển. Nhà tuyển dụng sẽ xem xét hồ sơ của bạn và liên hệ nếu phù hợp.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertDescription>
+              Bạn có thể theo dõi trạng thái đơn ứng tuyển của mình bằng liên kết bên dưới. 
+              Hãy lưu lại đường dẫn này để kiểm tra sau.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+        <CardFooter>
+          <Button asChild className="w-full">
+            <Link to={`/application-tracker?id=${applicationId}`}>
+              Theo dõi đơn ứng tuyển
+            </Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
   
   return (
     <Form {...form}>

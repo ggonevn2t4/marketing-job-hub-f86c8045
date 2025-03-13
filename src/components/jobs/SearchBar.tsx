@@ -1,8 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { fetchCategories } from '@/utils/supabaseQueries';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -12,14 +15,50 @@ import {
 } from '@/components/ui/select';
 
 const SearchBar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [location, setLocation] = useState('');
+  const [locationValue, setLocationValue] = useState('');
   const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Get query params from URL if on search page
+  useEffect(() => {
+    if (location.pathname === '/jobs') {
+      const params = new URLSearchParams(location.search);
+      setSearchTerm(params.get('q') || '');
+      setLocationValue(params.get('location') || '');
+      setCategory(params.get('category') || '');
+    }
+  }, [location]);
+
+  // Fetch categories
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    getCategories();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle search logic here
-    console.log('Searching for:', { searchTerm, location, category });
+    
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('q', searchTerm);
+    if (locationValue) params.set('location', locationValue);
+    if (category) params.set('category', category);
+    
+    navigate(`/jobs?${params.toString()}`);
   };
 
   return (
@@ -37,30 +76,35 @@ const SearchBar = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:w-[50%]">
-          <Select value={location} onValueChange={setLocation}>
+          <Select value={locationValue} onValueChange={setLocationValue}>
             <SelectTrigger className="py-6">
               <SelectValue placeholder="Địa điểm" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả địa điểm</SelectItem>
-              <SelectItem value="ho-chi-minh">TP. Hồ Chí Minh</SelectItem>
-              <SelectItem value="hanoi">Hà Nội</SelectItem>
-              <SelectItem value="danang">Đà Nẵng</SelectItem>
+              <SelectItem value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</SelectItem>
+              <SelectItem value="Hà Nội">Hà Nội</SelectItem>
+              <SelectItem value="Đà Nẵng">Đà Nẵng</SelectItem>
             </SelectContent>
           </Select>
           
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="py-6">
-              <SelectValue placeholder="Chuyên ngành" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả chuyên ngành</SelectItem>
-              <SelectItem value="digital-marketing">Digital Marketing</SelectItem>
-              <SelectItem value="content-marketing">Content Marketing</SelectItem>
-              <SelectItem value="social-media">Social Media</SelectItem>
-              <SelectItem value="seo-sem">SEO/SEM</SelectItem>
-            </SelectContent>
-          </Select>
+          {loading ? (
+            <Skeleton className="h-[42px]" />
+          ) : (
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="py-6">
+                <SelectValue placeholder="Chuyên ngành" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả chuyên ngành</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <Button type="submit" className="py-6 px-8">Tìm kiếm</Button>

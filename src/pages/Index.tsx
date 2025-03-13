@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import Hero from '@/components/homepage/Hero';
 import Stats from '@/components/homepage/Stats';
@@ -8,137 +8,15 @@ import CallToAction from '@/components/homepage/CallToAction';
 import JobList from '@/components/jobs/JobList';
 import Companies from '@/components/companies/Companies';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
 import LinkButton from '@/components/custom/LinkButton';
-
-const sampleJobs = [
-  {
-    id: '1',
-    title: 'Digital Marketing Manager',
-    company: 'Tech Solutions',
-    logo: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'TP. Hồ Chí Minh',
-    salary: '25 - 35 triệu VND',
-    jobType: 'Toàn thời gian',
-    experienceLevel: '3 - 5 năm',
-    postedAt: '2 ngày trước',
-    isFeatured: true
-  },
-  {
-    id: '2',
-    title: 'Content Marketing Specialist',
-    company: 'Creative Agency',
-    logo: 'https://images.unsplash.com/photo-1549924231-f129b911e442?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'Hà Nội',
-    salary: '15 - 20 triệu VND',
-    jobType: 'Toàn thời gian',
-    experienceLevel: '1 - 3 năm',
-    postedAt: '1 ngày trước',
-    isHot: true
-  },
-  {
-    id: '3',
-    title: 'SEO/SEM Specialist',
-    company: 'Digital World',
-    logo: 'https://images.unsplash.com/photo-1614036546595-c2c98daa7666?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'Đà Nẵng',
-    salary: '18 - 22 triệu VND',
-    jobType: 'Toàn thời gian',
-    experienceLevel: '2 - 4 năm',
-    postedAt: '3 ngày trước'
-  },
-  {
-    id: '4',
-    title: 'Social Media Manager',
-    company: 'Brand Connect',
-    logo: 'https://images.unsplash.com/photo-1560472355-536de3962603?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'TP. Hồ Chí Minh',
-    salary: '20 - 25 triệu VND',
-    jobType: 'Toàn thời gian',
-    experienceLevel: '2 - 4 năm',
-    postedAt: '4 ngày trước',
-    isUrgent: true
-  },
-  {
-    id: '5',
-    title: 'Email Marketing Specialist',
-    company: 'E-Commerce Pro',
-    logo: 'https://images.unsplash.com/photo-1560472355-536de3962603?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'Hà Nội',
-    salary: '15 - 18 triệu VND',
-    jobType: 'Toàn thời gian',
-    experienceLevel: '1 - 3 năm',
-    postedAt: '5 ngày trước'
-  },
-  {
-    id: '6',
-    title: 'Marketing Director',
-    company: 'Global Innovations',
-    logo: 'https://images.unsplash.com/photo-1560472355-536de3962603?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'TP. Hồ Chí Minh',
-    salary: '50 - 70 triệu VND',
-    jobType: 'Toàn thời gian',
-    experienceLevel: '7+ năm',
-    postedAt: '1 tuần trước',
-    isFeatured: true
-  }
-];
-
-const sampleCompanies = [
-  {
-    id: '1',
-    name: 'Tech Solutions',
-    logo: 'https://images.unsplash.com/photo-1560472355-536de3962603?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'TP. Hồ Chí Minh',
-    industry: 'Công nghệ',
-    jobCount: 12,
-    isFeatured: true
-  },
-  {
-    id: '2',
-    name: 'Creative Agency',
-    logo: 'https://images.unsplash.com/photo-1549924231-f129b911e442?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'Hà Nội',
-    industry: 'Creative',
-    jobCount: 8,
-    isFeatured: true
-  },
-  {
-    id: '3',
-    name: 'Digital World',
-    logo: 'https://images.unsplash.com/photo-1614036546595-c2c98daa7666?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'Đà Nẵng',
-    industry: 'Digital',
-    jobCount: 5
-  },
-  {
-    id: '4',
-    name: 'Brand Connect',
-    logo: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'TP. Hồ Chí Minh',
-    industry: 'Branding',
-    jobCount: 7
-  },
-  {
-    id: '5',
-    name: 'E-Commerce Pro',
-    logo: 'https://images.unsplash.com/photo-1549924231-f129b911e442?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'Hà Nội',
-    industry: 'E-Commerce',
-    jobCount: 4
-  },
-  {
-    id: '6',
-    name: 'Global Innovations',
-    logo: 'https://images.unsplash.com/photo-1614036546595-c2c98daa7666?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80',
-    location: 'TP. Hồ Chí Minh',
-    industry: 'Innovation',
-    jobCount: 9,
-    isFeatured: true
-  }
-];
+import { fetchJobs, fetchCompanies } from '@/utils/supabaseQueries';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Index = () => {
+  const [featuredJobs, setFeaturedJobs] = useState<any[]>([]);
+  const [featuredCompanies, setFeaturedCompanies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   // Import the framer-motion library
   useEffect(() => {
     const loadFramerMotion = async () => {
@@ -150,6 +28,32 @@ const Index = () => {
     };
     
     loadFramerMotion();
+  }, []);
+
+  // Fetch data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch featured jobs
+        const { jobs } = await fetchJobs({
+          limit: 6,
+        });
+        setFeaturedJobs(jobs);
+        
+        // Fetch featured companies
+        const companies = await fetchCompanies(true, 6);
+        setFeaturedCompanies(companies);
+        
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
 
   const sectionVariants = {
@@ -264,17 +168,36 @@ const Index = () => {
               </motion.div>
             </div>
             
-            <motion.div
-              variants={{
-                hidden: { opacity: 0 },
-                visible: { opacity: 1 }
-              }}
-            >
-              <JobList 
-                jobs={sampleJobs} 
-                showLoadMore={false}
-              />
-            </motion.div>
+            {loading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="border rounded-lg p-6 space-y-4">
+                    <Skeleton className="h-8 w-3/4" />
+                    <div className="flex items-center space-x-4">
+                      <Skeleton className="h-12 w-12 rounded-full" />
+                      <Skeleton className="h-4 w-36" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Skeleton className="h-6 w-24" />
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1 }
+                }}
+              >
+                <JobList 
+                  jobs={featuredJobs} 
+                  showLoadMore={false}
+                />
+              </motion.div>
+            )}
           </motion.section>
           
           <CallToAction />
@@ -316,18 +239,30 @@ const Index = () => {
               </motion.p>
             </div>
             
-            <motion.div
-              variants={{
-                hidden: { opacity: 0 },
-                visible: { opacity: 1 }
-              }}
-            >
-              <Companies 
-                companies={sampleCompanies} 
-                showLoadMore={false}
-                showViewAll={true}
-              />
-            </motion.div>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="border rounded-lg p-6 space-y-4">
+                    <Skeleton className="h-16 w-16 rounded-lg mx-auto" />
+                    <Skeleton className="h-6 w-3/4 mx-auto" />
+                    <Skeleton className="h-4 w-1/2 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1 }
+                }}
+              >
+                <Companies 
+                  companies={featuredCompanies} 
+                  showLoadMore={false}
+                  showViewAll={true}
+                />
+              </motion.div>
+            )}
           </motion.section>
         </div>
       </div>
