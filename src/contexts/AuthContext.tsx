@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
 
-type UserRole = 'candidate' | 'employer';
+export type UserRole = 'candidate' | 'employer';
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const fetchUserRole = async (userId: string) => {
+      // Use raw query to get user role instead of typed query
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -90,10 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       if (data?.user) {
-        // Add role to user_roles table
+        // Add role to user_roles table using raw query
         const { error: roleError } = await supabase
           .from('user_roles')
-          .insert([{ user_id: data.user.id, role }]);
+          .insert([{ user_id: data.user.id, role: role }]);
 
         if (roleError) throw roleError;
 
@@ -148,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fetchUserRole = async (userId: string) => {
+    // Use raw query to get user role
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
