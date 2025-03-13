@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin, Instagram, Mail } from 'lucide-react';
+import { Facebook, Twitter, Linkedin, Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Footer = () => {
@@ -84,8 +84,20 @@ const Footer = () => {
           </div>
           
           <div>
-            <h4 className="font-semibold mb-4">Liên hệ</h4>
+            <h4 className="font-semibold mb-4">Thông tin liên hệ</h4>
             <ul className="space-y-3">
+              <li className="flex items-start gap-2 text-muted-foreground">
+                <MapPin size={16} className="mt-1 flex-shrink-0" />
+                <span className="hover:text-primary transition-colors">
+                  Landmark 81, Quận Bình Thạnh, TP. Hồ Chí Minh
+                </span>
+              </li>
+              <li className="flex items-center gap-2 text-muted-foreground">
+                <Phone size={16} className="flex-shrink-0" />
+                <a href="tel:0708684608" className="hover:text-primary transition-colors">
+                  0708684608
+                </a>
+              </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Mail size={16} />
                 <a href="mailto:contact@topmarketingjobs.vn" className="hover:text-primary transition-colors">
