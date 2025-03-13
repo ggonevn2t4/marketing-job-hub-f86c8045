@@ -14,6 +14,8 @@ import CompanyDetail from "./pages/CompanyDetail";
 import ApplicationTracker from "./pages/ApplicationTracker";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
+import CompanyProfile from "./pages/CompanyProfile";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,8 @@ const App = () => (
               <Route path="/companies/:id" element={<CompanyDetail />} />
               <Route path="/application-tracker" element={<ApplicationTracker />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/company-profile" element={<CompanyProfile />} />
               <Route path="/blog" element={<Index />} />
               <Route path="/about" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
