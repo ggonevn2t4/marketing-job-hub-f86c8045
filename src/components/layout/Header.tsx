@@ -1,181 +1,179 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, User, MessageCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import LinkButton from '../custom/LinkButton';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import NotificationBell from './NotificationBell';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/ui/mode-toggle";
+import LinkButton from "@/components/custom/LinkButton";
+import NotificationBell from "@/components/layout/NotificationBell";
+import { Briefcase, LogOut, LayoutDashboard, MessageSquare, User } from "lucide-react";
+import { UserRole } from "@/types/auth";
+import { CandidateProfile } from "@/types/profile";
+import { CompanyProfile } from "@/types/profile";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
-  const location = useLocation();
+  const { user, signOut } = useAuth();
+  const [profileData, setProfileData] = useState<CandidateProfile | CompanyProfile | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          let tableName = 'profiles';
+          if (role === 'employer') {
+            tableName = 'companies';
+          }
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+          const { data, error } = await supabase
+            .from(tableName)
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-  // Helper to get user display name and initials safely
-  const getUserDisplayName = () => {
-    if (!user) return '';
-    return user.user_metadata?.full_name || '';
-  };
+          if (error) {
+            console.error("Error fetching profile:", error);
+          } else {
+            setProfileData(data as CandidateProfile | CompanyProfile);
+          }
+        } catch (error) {
+          console.error("Unexpected error fetching profile:", error);
+        }
+      }
+    };
 
-  const getUserInitials = () => {
-    const name = getUserDisplayName();
-    return name ? name.slice(0, 2) : 'U';
-  };
+    fetchProfile();
+  }, [user, role]);
 
-  const getUserAvatarUrl = () => {
-    if (!user) return '';
-    return user.user_metadata?.avatar_url || '';
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) {
+            console.error("Error fetching user role:", error);
+          } else if (data) {
+            setRole(data.role);
+          }
+        } catch (error) {
+          console.error("Unexpected error fetching user role:", error);
+        }
+      } else {
+        setRole(null);
+        setProfileData(null);
+      }
+    };
+
+    fetchUserRole();
+  }, [user]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Đăng xuất thành công!",
+        description: "Bạn đã đăng xuất khỏi tài khoản.",
+      });
+      navigate('/auth');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Đăng xuất thất bại",
+        description: error.message,
+      });
+    }
   };
 
   return (
-    <header className="py-4 border-b sticky top-0 bg-background z-50">
-      <div className="container mx-auto px-6">
-        <div className="flex justify-between items-center">
-          {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-primary">
-            Job<span className="text-secondary">Ease</span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="hover:text-secondary transition-colors">
-              Trang chủ
-            </Link>
-            <Link to="/jobs" className="hover:text-secondary transition-colors">
-              Việc làm
-            </Link>
-            <Link to="/companies" className="hover:text-secondary transition-colors">
-              Công ty
-            </Link>
-            <Link to="/blog" className="hover:text-secondary transition-colors">
-              Blog
-            </Link>
-            <Link to="/about" className="hover:text-secondary transition-colors">
-              Về chúng tôi
-            </Link>
-          </nav>
-
-          {/* Auth Buttons / User Menu */}
-          <div className="hidden md:flex items-center space-x-2">
-            {user ? (
-              <div className="flex items-center space-x-3">
-                <NotificationBell />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={getUserAvatarUrl()} alt={getUserDisplayName()} />
-                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+    <header className="bg-background sticky top-0 z-40 border-b">
+      <div className="container flex h-16 items-center justify-between py-4">
+        <Link to="/" className="mr-4 flex items-center space-x-2">
+          <span className="font-bold">Job Board</span>
+        </Link>
+        <div className="flex items-center space-x-4">
+          <LinkButton to="/jobs">Việc làm</LinkButton>
+          <LinkButton to="/companies">Công ty</LinkButton>
+          <LinkButton to="/blog">Blog</LinkButton>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profileData?.avatar_url || ''} alt={user?.email || ''} />
+                    <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{profileData?.full_name || user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Bảng điều khiển</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={role === 'employer' ? '/company-profile' : '/profile'}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Hồ sơ</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/saved-jobs')}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="mr-2 h-4 w-4"
-                      >
-                        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                      </svg>
-                      <span>Việc làm đã lưu</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/messages">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      <span>Tin nhắn</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {role === 'employer' && (
                     <DropdownMenuItem asChild>
-                      <Link to="/messages" className="cursor-pointer">
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        <span>Tin nhắn</span>
+                      <Link to="/manage-jobs">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        <span>Quản lý tin tuyển dụng</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => logout()}>
-                      Đăng xuất
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <LinkButton to="/auth">Đăng nhập</LinkButton>
-                <LinkButton to="/auth" variant="secondary">
-                  Đăng ký
-                </LinkButton>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <Button variant="ghost" className="md:hidden" onClick={toggleMenu}>
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
+                  )}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Đăng xuất</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <LinkButton to="/auth">Đăng nhập</LinkButton>
+            </>
+          )}
+          <NotificationBell />
+          <ModeToggle />
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-background border-b z-50">
-          <nav className="px-6 py-4 flex flex-col space-y-3">
-            <Link to="/" className="block hover:text-secondary transition-colors" onClick={closeMenu}>
-              Trang chủ
-            </Link>
-            <Link to="/jobs" className="block hover:text-secondary transition-colors" onClick={closeMenu}>
-              Việc làm
-            </Link>
-            <Link to="/companies" className="block hover:text-secondary transition-colors" onClick={closeMenu}>
-              Công ty
-            </Link>
-            <Link to="/blog" className="block hover:text-secondary transition-colors" onClick={closeMenu}>
-              Blog
-            </Link>
-            <Link to="/about" className="block hover:text-secondary transition-colors" onClick={closeMenu}>
-              Về chúng tôi
-            </Link>
-            {!user ? (
-              <>
-                <LinkButton to="/auth" className="block text-center" onClick={closeMenu}>
-                  Đăng nhập
-                </LinkButton>
-                <LinkButton to="/auth" variant="secondary" className="block text-center" onClick={closeMenu}>
-                  Đăng ký
-                </LinkButton>
-              </>
-            ) : (
-              <>
-                <Link to="/profile" className="block hover:text-secondary transition-colors" onClick={closeMenu}>
-                  Hồ sơ
-                </Link>
-                <Button variant="outline" className="w-full" onClick={() => {
-                  logout();
-                  closeMenu();
-                }}>
-                  Đăng xuất
-                </Button>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
     </header>
   );
 };

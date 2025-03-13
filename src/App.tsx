@@ -29,6 +29,9 @@ import Privacy from "./pages/Privacy";
 import Sitemap from "./pages/Sitemap";
 import ZapierIntegration from "./pages/ZapierIntegration";
 import Conversations from "./pages/Conversations";
+import Dashboard from "./pages/Dashboard";
+import CandidateDashboard from "./pages/CandidateDashboard";
+import EmployerDashboard from "./pages/EmployerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -62,8 +65,13 @@ const App = () => (
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/sitemap" element={<Sitemap />} />
               <Route path="/zapier-integration" element={<ZapierIntegration />} />
-              {/* Messaging */}
               <Route path="/messages" element={<Conversations />} />
+              
+              {/* Dashboard Routes */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/candidate" element={<CandidateDashboard />} />
+              <Route path="/dashboard/employer" element={<EmployerDashboard />} />
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
