@@ -71,8 +71,11 @@ export const useAuthProvider = () => {
             title: "Xác nhận email",
             description: "Vui lòng kiểm tra email để xác nhận tài khoản.",
           });
+          navigate('/auth'); // Redirect to login page
         }
       }
+      
+      return result;
     } catch (error: any) {
       console.error("Error during sign up:", error);
       
@@ -115,6 +118,7 @@ export const useAuthProvider = () => {
         });
         
         navigate('/');
+        return data;
       }
     } catch (error: any) {
       console.error("Error during sign in:", error);
@@ -150,6 +154,7 @@ export const useAuthProvider = () => {
       
       toast({
         title: "Đăng xuất thành công",
+        description: "Bạn đã đăng xuất khỏi tài khoản.",
       });
       
       navigate(redirectPath);
@@ -168,7 +173,7 @@ export const useAuthProvider = () => {
     }
   };
 
-  const logout = signOut;
+  const logout = signOut; // Alias for backward compatibility
 
   return {
     user,

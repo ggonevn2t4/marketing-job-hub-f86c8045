@@ -4,19 +4,26 @@ import { UserRole } from '@/types/auth';
 import { sendZapierEvent } from './zapierService';
 
 export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
-  // Use raw query to get user role
-  const { data, error } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId)
-    .maybeSingle();
+  try {
+    console.log("Fetching role for user:", userId);
+    // Use raw query to get user role
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-  if (error) {
-    console.error('Error fetching user role:', error);
+    if (error) {
+      console.error('Error fetching user role:', error);
+      return null;
+    }
+    
+    console.log("User role data:", data);
+    return data?.role as UserRole;
+  } catch (error) {
+    console.error('Unexpected error in fetchUserRole:', error);
     return null;
   }
-  
-  return data?.role as UserRole;
 };
 
 export const signUpUser = async (
@@ -26,6 +33,8 @@ export const signUpUser = async (
   role: UserRole
 ) => {
   try {
+    console.log("Starting signup process for:", email, fullName, role);
+    
     // First create the user in auth
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -37,7 +46,10 @@ export const signUpUser = async (
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Signup auth error:", error);
+      throw error;
+    }
 
     if (data?.user) {
       console.log("User created successfully, now adding role:", {
@@ -53,6 +65,35 @@ export const signUpUser = async (
       if (roleError) {
         console.error("Error adding user role:", roleError);
         throw roleError;
+      }
+      
+      // Initialize profile or company record based on role
+      if (role === 'candidate') {
+        // Create candidate profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{ 
+            id: data.user.id, 
+            full_name: fullName,
+          }]);
+          
+        if (profileError) {
+          console.error("Error creating candidate profile:", profileError);
+          // Non-critical error, don't throw
+        }
+      } else if (role === 'employer') {
+        // Create company profile
+        const { error: companyError } = await supabase
+          .from('companies')
+          .insert([{ 
+            id: data.user.id, 
+            name: fullName,
+          }]);
+          
+        if (companyError) {
+          console.error("Error creating company profile:", companyError);
+          // Non-critical error, don't throw
+        }
       }
       
       // Send event to Zapier if configured
@@ -79,13 +120,19 @@ export const signUpUser = async (
 
 export const signInUser = async (email: string, password: string) => {
   try {
+    console.log("Attempting signin for:", email);
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Signin error:", error);
+      throw error;
+    }
     
+    console.log("Signin successful:", data.user?.id);
     return data;
   } catch (error) {
     console.error("Sign in error:", error);
@@ -94,6 +141,26 @@ export const signInUser = async (email: string, password: string) => {
 };
 
 export const signOutUser = async () => {
+  console.log("Signing out user");
   const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  if (error) {
+    console.error("Signout error:", error);
+    throw error;
+  }
+  console.log("Signout successful");
+};
+
+export const resetPassword = async (email: string) => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Reset password error:", error);
+    throw error;
+  }
 };

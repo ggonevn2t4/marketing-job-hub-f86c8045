@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,11 +31,18 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Auth = () => {
-  const { signIn, signUp, isLoading } = useAuth();
+  const { signIn, signUp, isLoading, user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('login');
   const { toast } = useToast();
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -59,8 +67,8 @@ const Auth = () => {
     try {
       await signIn(values.email, values.password);
     } catch (error: any) {
-      setLoginError(error.message || 'Đăng nhập thất bại');
-      console.error('Login error:', error);
+      // Error is already handled in the signIn function
+      console.error('Login error details:', error);
     }
   };
 
@@ -68,20 +76,10 @@ const Auth = () => {
     setRegistrationError(null);
     try {
       await signUp(values.email, values.password, values.fullName, values.role);
-      // Registration was successful
-      toast({
-        title: 'Đăng ký thành công',
-        description: 'Tài khoản của bạn đã được tạo thành công.',
-      });
+      // Registration was successful, handled in signUp function
     } catch (error: any) {
-      // Display the specific error message
-      setRegistrationError(error.message || 'Đăng ký thất bại');
-      console.error('Registration error:', error);
-      toast({
-        title: 'Đăng ký thất bại',
-        description: error.message || 'Vui lòng thử lại sau.',
-        variant: 'destructive',
-      });
+      // Error is already handled in the signUp function
+      console.error('Registration error details:', error);
     }
   };
 

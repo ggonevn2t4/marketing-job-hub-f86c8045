@@ -4,16 +4,25 @@ import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import { useIsMobile, useIsTablet } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
   withFilters?: boolean;
+  requireAuth?: boolean;
+  redirect?: string;
 }
 
-const Layout = ({ children, withFilters = false }: LayoutProps) => {
+const Layout = ({ 
+  children, 
+  withFilters = false, 
+  requireAuth = false,
+  redirect = '/auth'
+}: LayoutProps) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  const { user, isLoading } = useAuth();
 
   // Scroll to top on route change
   useEffect(() => {
