@@ -356,7 +356,7 @@ export const useProfile = () => {
   };
 
   const handleUploadResume = async (file: File) => {
-    if (!user) return;
+    if (!user) return '';
     
     try {
       setIsLoading(true);

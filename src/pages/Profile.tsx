@@ -154,7 +154,7 @@ const Profile = () => {
             <ResumeUpload
               resumeUrl={profile?.resume_url}
               isLoading={isLoading}
-              onUpload={handleUploadResume}
+              onUpload={(file) => handleUploadResume(file).then(() => {})}
               onDelete={handleDeleteResume}
             />
           </TabsContent>

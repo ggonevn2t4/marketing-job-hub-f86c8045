@@ -37,7 +37,7 @@ export interface CandidateProfile {
   bio: string | null;
   address: string | null;
   date_of_birth: string | null;
-  resume_url?: string | null;
+  resume_url: string | null;
   created_at: string;
   education: Education[];
   experience: Experience[];

@@ -178,7 +178,7 @@ const ResumeUpload = ({ resumeUrl, isLoading, onUpload, onDelete }: ResumeUpload
               </div>
               <div className="flex space-x-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => window.open(resumeUrl, '_blank')}
                 >
