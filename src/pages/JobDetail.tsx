@@ -41,6 +41,7 @@ interface JobDetail {
     logo: string;
     location: string;
     industry: string;
+    description?: string; // Make description optional
   };
   category: {
     id: string;
