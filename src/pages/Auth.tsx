@@ -1,11 +1,9 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { z } from 'zod';
@@ -14,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import Layout from '@/components/layout/Layout';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Email không hợp lệ' }),
@@ -33,6 +32,9 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const Auth = () => {
   const { signIn, signUp, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('login');
+  const { toast } = useToast();
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -53,11 +55,34 @@ const Auth = () => {
   });
 
   const onLoginSubmit = async (values: LoginFormValues) => {
-    await signIn(values.email, values.password);
+    setLoginError(null);
+    try {
+      await signIn(values.email, values.password);
+    } catch (error: any) {
+      setLoginError(error.message || 'Đăng nhập thất bại');
+      console.error('Login error:', error);
+    }
   };
 
   const onRegisterSubmit = async (values: RegisterFormValues) => {
-    await signUp(values.email, values.password, values.fullName, values.role);
+    setRegistrationError(null);
+    try {
+      await signUp(values.email, values.password, values.fullName, values.role);
+      // Registration was successful
+      toast({
+        title: 'Đăng ký thành công',
+        description: 'Tài khoản của bạn đã được tạo thành công.',
+      });
+    } catch (error: any) {
+      // Display the specific error message
+      setRegistrationError(error.message || 'Đăng ký thất bại');
+      console.error('Registration error:', error);
+      toast({
+        title: 'Đăng ký thất bại',
+        description: error.message || 'Vui lòng thử lại sau.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -107,6 +132,10 @@ const Auth = () => {
                         </FormItem>
                       )}
                     />
+                    
+                    {loginError && (
+                      <div className="text-destructive text-sm">{loginError}</div>
+                    )}
                     
                     <Button type="submit" className="w-full" disabled={isLoading}>
                       {isLoading ? (
@@ -216,6 +245,10 @@ const Auth = () => {
                         </FormItem>
                       )}
                     />
+                    
+                    {registrationError && (
+                      <div className="text-destructive text-sm">{registrationError}</div>
+                    )}
                     
                     <Button type="submit" className="w-full" disabled={isLoading}>
                       {isLoading ? (

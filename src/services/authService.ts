@@ -9,7 +9,7 @@ export const fetchUserRole = async (userId: string): Promise<UserRole | null> =>
     .from('user_roles')
     .select('role')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching user role:', error);
@@ -25,53 +25,72 @@ export const signUpUser = async (
   fullName: string, 
   role: UserRole
 ) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: fullName,
+  try {
+    // First create the user in auth
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
       },
-    },
-  });
+    });
 
-  if (error) throw error;
+    if (error) throw error;
 
-  if (data?.user) {
-    // Add role to user_roles table using raw query
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .insert([{ user_id: data.user.id, role: role }]);
-
-    if (roleError) throw roleError;
-    
-    // Send event to Zapier if configured
-    try {
-      await sendZapierEvent('user_registration', {
+    if (data?.user) {
+      console.log("User created successfully, now adding role:", {
         user_id: data.user.id,
-        email: email,
-        full_name: fullName,
-        role: role,
-        registration_date: new Date().toISOString(),
+        role: role
       });
-    } catch (zapierError) {
-      console.error('Error sending registration event to Zapier:', zapierError);
-      // Non-critical error, don't throw
-    }
-  }
+      
+      // Add role to user_roles table using raw query
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert([{ user_id: data.user.id, role: role }]);
 
-  return data;
+      if (roleError) {
+        console.error("Error adding user role:", roleError);
+        throw roleError;
+      }
+      
+      // Send event to Zapier if configured
+      try {
+        await sendZapierEvent('user_registration', {
+          user_id: data.user.id,
+          email: email,
+          full_name: fullName,
+          role: role,
+          registration_date: new Date().toISOString(),
+        });
+      } catch (zapierError) {
+        console.error('Error sending registration event to Zapier:', zapierError);
+        // Non-critical error, don't throw
+      }
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Sign up error:", error);
+    throw error;
+  }
 };
 
 export const signInUser = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) throw error;
-  
-  return data;
+    if (error) throw error;
+    
+    return data;
+  } catch (error) {
+    console.error("Sign in error:", error);
+    throw error;
+  }
 };
 
 export const signOutUser = async () => {

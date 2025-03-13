@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -36,6 +37,7 @@ export const useAuthProvider = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log("Auth state changed:", _event, session?.user?.id);
         setSession(session);
         await setupUser(session);
       }
@@ -49,20 +51,47 @@ export const useAuthProvider = () => {
   const signUp = async (email: string, password: string, fullName: string, role: UserRole) => {
     try {
       setIsLoading(true);
-      await signUpUser(email, password, fullName, role);
+      console.log("Starting sign up for:", email, fullName, role);
       
-      toast({
-        title: "Đăng ký thành công!",
-        description: "Bạn đã đăng ký thành công.",
-      });
+      const result = await signUpUser(email, password, fullName, role);
+      console.log("Sign up result:", result);
       
-      navigate('/');
+      if (result.user) {
+        toast({
+          title: "Đăng ký thành công!",
+          description: "Bạn đã đăng ký thành công.",
+        });
+        
+        // If email confirmation is disabled, user will be signed in automatically
+        if (result.session) {
+          navigate('/');
+        } else {
+          // With email confirmation, show a message
+          toast({
+            title: "Xác nhận email",
+            description: "Vui lòng kiểm tra email để xác nhận tài khoản.",
+          });
+        }
+      }
     } catch (error: any) {
+      console.error("Error during sign up:", error);
+      
+      let errorMessage = "Đăng ký thất bại. Vui lòng thử lại.";
+      
+      // Handle specific error types
+      if (error.message.includes("unique constraint")) {
+        errorMessage = "Email này đã được sử dụng, vui lòng sử dụng email khác.";
+      } else if (error.message.includes("password")) {
+        errorMessage = "Mật khẩu không đáp ứng yêu cầu bảo mật.";
+      }
+      
       toast({
         title: "Đăng ký thất bại",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +100,10 @@ export const useAuthProvider = () => {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log("Starting sign in for:", email);
+      
       const data = await signInUser(email, password);
+      console.log("Sign in result:", data);
 
       if (data?.user) {
         const role = await fetchUserRole(data.user.id);
@@ -85,11 +117,24 @@ export const useAuthProvider = () => {
         navigate('/');
       }
     } catch (error: any) {
+      console.error("Error during sign in:", error);
+      
+      let errorMessage = "Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.";
+      
+      // Handle specific error types
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Email hoặc mật khẩu không chính xác.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Email chưa được xác nhận. Vui lòng kiểm tra hộp thư của bạn.";
+      }
+      
       toast({
         title: "Đăng nhập thất bại",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -109,11 +154,15 @@ export const useAuthProvider = () => {
       
       navigate(redirectPath);
     } catch (error: any) {
+      console.error("Error during sign out:", error);
+      
       toast({
         title: "Đăng xuất thất bại",
         description: error.message,
         variant: "destructive",
       });
+      
+      throw error;
     } finally {
       setIsLoading(false);
     }
