@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import Hero from '@/components/homepage/Hero';
 import Stats from '@/components/homepage/Stats';
@@ -9,6 +9,7 @@ import CategorySection from '@/components/homepage/CategorySection';
 import FeaturedJobs from '@/components/homepage/FeaturedJobs';
 import FeaturedCompanies from '@/components/homepage/FeaturedCompanies';
 import WhyChooseUs from '@/components/homepage/WhyChooseUs';
+import { Toaster } from "@/components/ui/toaster";
 
 const Index = () => {
   // Load framer-motion asynchronously

@@ -1,62 +1,67 @@
 
-import { useEffect, useState } from 'react';
-import { jobApplicationsChannel, supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
-export const useApplicationStatus = (applicationId?: string) => {
-  const [status, setStatus] = useState<string>('pending');
-  const [isSubscribed, setIsSubscribed] = useState(false);
+export const useApplicationStatus = () => {
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!applicationId) return;
+  const updateApplicationStatus = async (
+    applicationId: string,
+    status: string,
+    candidateId: string
+  ) => {
+    try {
+      setIsLoading(true);
 
-    // Initial status fetch
-    const fetchStatus = async () => {
-      const { data, error } = await supabase
+      // Update status in database
+      const { error } = await supabase
         .from('job_applications')
-        .select('status')
-        .eq('id', applicationId)
-        .single();
+        .update({ status })
+        .eq('id', applicationId);
+
+      if (error) throw error;
       
-      if (!error && data) {
-        setStatus(data.status);
-      }
-    };
-
-    fetchStatus();
-
-    // Subscribe to changes
-    if (!isSubscribed) {
-      jobApplicationsChannel
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'job_applications',
-            filter: `id=eq.${applicationId}`
+      // Send notification to candidate
+      try {
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          (payload: any) => {
-            if (payload.new && payload.new.status) {
-              setStatus(payload.new.status);
-            }
-          }
-        )
-        .subscribe((status: any) => {
-          if (status === 'SUBSCRIBED') {
-            setIsSubscribed(true);
-          }
+          body: JSON.stringify({
+            action: 'application_update',
+            data: {
+              applicationId,
+              status,
+              candidateId,
+            },
+          }),
         });
-    }
-
-    return () => {
-      if (isSubscribed) {
-        supabase.removeChannel(jobApplicationsChannel);
-        setIsSubscribed(false);
+      } catch (notifError) {
+        console.error('Error sending notification:', notifError);
       }
-    };
-  }, [applicationId, isSubscribed]);
 
-  return { status };
+      toast({
+        title: 'Cập nhật thành công',
+        description: 'Trạng thái đơn ứng tuyển đã được cập nhật',
+      });
+
+      return true;
+    } catch (error: any) {
+      toast({
+        title: 'Lỗi',
+        description: error.message || 'Không thể cập nhật trạng thái',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { updateApplicationStatus, isLoading };
 };
 
 export default useApplicationStatus;

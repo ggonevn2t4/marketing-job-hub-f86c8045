@@ -1,229 +1,185 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle2 } from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
-  fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
-  email: z.string().email('Email không hợp lệ'),
-  phone: z.string().min(10, 'Số điện thoại không hợp lệ'),
-  resumeUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
-  coverLetter: z.string().min(10, 'Thư xin việc quá ngắn'),
+  full_name: z.string().min(2, { message: 'Tên cần ít nhất 2 ký tự' }),
+  email: z.string().email({ message: 'Email không hợp lệ' }),
+  phone: z.string().optional(),
+  cover_letter: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-interface JobApplicationFormProps {
+type JobApplicationFormProps = {
   jobId: string;
+  jobTitle: string;
   onSuccess?: () => void;
-}
+};
 
-const JobApplicationForm = ({ jobId, onSuccess }: JobApplicationFormProps) => {
+const JobApplicationForm = ({ jobId, jobTitle, onSuccess }: JobApplicationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [applicationId, setApplicationId] = useState<string | null>(null);
-  const { user } = useAuth();
   
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: '',
-      email: user?.email || '',
+      full_name: '',
+      email: '',
       phone: '',
-      resumeUrl: '',
-      coverLetter: '',
+      cover_letter: '',
     },
   });
-  
-  const onSubmit = async (data: FormValues) => {
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
       
-      const applicationData = {
-        job_id: jobId,
-        full_name: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        resume_url: data.resumeUrl || null,
-        cover_letter: data.coverLetter,
-      };
-      
-      const { data: insertedData, error } = await supabase
+      // Submit application
+      const { data: application, error } = await supabase
         .from('job_applications')
-        .insert([applicationData])
-        .select();
+        .insert({
+          job_id: jobId,
+          full_name: values.full_name,
+          email: values.email,
+          phone: values.phone || null,
+          cover_letter: values.cover_letter || null,
+        })
+        .select()
+        .single();
       
       if (error) throw error;
       
-      if (insertedData && insertedData.length > 0) {
-        setApplicationId(insertedData[0].id);
+      // Send notification to employer
+      try {
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            action: 'job_application',
+            data: {
+              jobId,
+              applicantName: values.full_name,
+            },
+          }),
+        });
+      } catch (notifError) {
+        console.error('Error sending notification:', notifError);
       }
       
-      setSubmitted(true);
+      toast({
+        title: 'Ứng tuyển thành công',
+        description: `Đơn ứng tuyển của bạn cho vị trí ${jobTitle} đã được gửi thành công.`,
+      });
+      
       form.reset();
       
       if (onSuccess) {
         onSuccess();
       }
-      
-    } catch (error) {
-      console.error('Error submitting application:', error);
+    } catch (err: any) {
       toast({
-        title: 'Lỗi',
-        description: 'Có lỗi xảy ra khi gửi đơn ứng tuyển. Vui lòng thử lại sau.',
+        title: 'Đã xảy ra lỗi',
+        description: err.message || 'Không thể gửi đơn ứng tuyển. Vui lòng thử lại.',
         variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  if (submitted) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="text-green-500 h-6 w-6" />
-            <CardTitle>Đơn ứng tuyển đã được gửi!</CardTitle>
-          </div>
-          <CardDescription>
-            Cảm ơn bạn đã nộp đơn ứng tuyển. Nhà tuyển dụng sẽ xem xét hồ sơ của bạn và liên hệ nếu phù hợp.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertDescription>
-              Bạn có thể theo dõi trạng thái đơn ứng tuyển của mình bằng liên kết bên dưới. 
-              Hãy lưu lại đường dẫn này để kiểm tra sau.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-        <CardFooter>
-          <Button asChild className="w-full">
-            <Link to={`/application-tracker?id=${applicationId}`}>
-              Theo dõi đơn ứng tuyển
-            </Link>
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
-  
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Họ và tên <span className="text-destructive">*</span></FormLabel>
-                <FormControl>
-                  <Input placeholder="Nhập họ và tên của bạn" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="email@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Số điện thoại <span className="text-destructive">*</span></FormLabel>
-                <FormControl>
-                  <Input placeholder="Nhập số điện thoại của bạn" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="resumeUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Link CV (Google Drive, Dropbox...)</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="coverLetter"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Thư xin việc <span className="text-destructive">*</span></FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Giới thiệu về bản thân và lý do bạn muốn ứng tuyển vị trí này..." 
-                  className="min-h-[200px]"
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Gửi đơn ứng tuyển
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <Card>
+      <CardHeader>
+        <CardTitle>Ứng tuyển</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="full_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Họ và tên</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nguyễn Văn A" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="email@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Số điện thoại (không bắt buộc)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="0123456789" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="cover_letter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Thư xin việc (không bắt buộc)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Giới thiệu về bản thân và lý do bạn muốn ứng tuyển vị trí này..." 
+                      className="min-h-[150px]"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang gửi...
+                </>
+              ) : (
+                'Gửi đơn ứng tuyển'
+              )}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
 
