@@ -1,6 +1,6 @@
 
 import { ReactNode, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import { useIsMobile, useIsTablet } from '@/hooks/use-mobile';
@@ -20,6 +20,7 @@ const Layout = ({
   redirect = '/auth'
 }: LayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const { user, isLoading } = useAuth();
@@ -28,6 +29,13 @@ const Layout = ({
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // Check authentication when requireAuth is true
+  useEffect(() => {
+    if (requireAuth && !isLoading && !user) {
+      navigate(redirect);
+    }
+  }, [requireAuth, user, isLoading, navigate, redirect]);
 
   return (
     <div className="flex flex-col min-h-screen">

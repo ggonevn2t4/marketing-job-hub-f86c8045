@@ -11,7 +11,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { EXPERIENCE_LEVELS, JOB_TYPES } from '@/types/job';
 import { Loader2 } from 'lucide-react';
-import { JobPackages } from './JobPackages';
 import { JobFormValues } from './JobPostingTypes';
 
 interface JobPreviewProps {
@@ -136,8 +135,94 @@ export const JobPreview = ({ onPrevious }: JobPreviewProps) => {
         </CardContent>
       </Card>
       
-      {/* Package selection */}
-      <JobPackages selectedPackage={selectedPackage} onSelectPackage={setSelectedPackage} />
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Chọn gói dịch vụ</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card 
+            className={`border hover:border-primary cursor-pointer transition-all ${selectedPackage === 'basic' ? 'border-primary ring-2 ring-primary ring-opacity-50' : ''}`}
+            onClick={() => setSelectedPackage('basic')}
+          >
+            <CardContent className="pt-6">
+              <div className="text-center mb-4">
+                <h4 className="text-lg font-bold">Cơ bản</h4>
+                <p className="text-2xl font-bold mt-2">1,000,000 VNĐ</p>
+                <p className="text-sm text-muted-foreground">30 ngày</p>
+              </div>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Hiển thị 30 ngày
+                </li>
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Tiếp cận không giới hạn ứng viên
+                </li>
+                <li className="flex items-center text-muted-foreground">
+                  <Badge variant="outline" className="mr-2">✕</Badge>
+                  Đẩy tin tuyển dụng
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Card 
+            className={`border relative hover:border-primary cursor-pointer transition-all ${selectedPackage === 'standard' ? 'border-primary ring-2 ring-primary ring-opacity-50' : ''}`}
+            onClick={() => setSelectedPackage('standard')}
+          >
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded">
+              Phổ biến nhất
+            </div>
+            <CardContent className="pt-6">
+              <div className="text-center mb-4">
+                <h4 className="text-lg font-bold">Nâng cao</h4>
+                <p className="text-2xl font-bold mt-2">2,500,000 VNĐ</p>
+                <p className="text-sm text-muted-foreground">30 ngày</p>
+              </div>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Hiển thị 30 ngày
+                </li>
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Tiếp cận không giới hạn ứng viên
+                </li>
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Đẩy tin tuyển dụng (7 ngày)
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Card 
+            className={`border hover:border-primary cursor-pointer transition-all ${selectedPackage === 'premium' ? 'border-primary ring-2 ring-primary ring-opacity-50' : ''}`}
+            onClick={() => setSelectedPackage('premium')}
+          >
+            <CardContent className="pt-6">
+              <div className="text-center mb-4">
+                <h4 className="text-lg font-bold">Premium</h4>
+                <p className="text-2xl font-bold mt-2">5,000,000 VNĐ</p>
+                <p className="text-sm text-muted-foreground">30 ngày</p>
+              </div>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Hiển thị 30 ngày
+                </li>
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Tiếp cận không giới hạn ứng viên
+                </li>
+                <li className="flex items-center">
+                  <Badge variant="outline" className="mr-2 bg-green-50">✓</Badge>
+                  Đẩy tin tuyển dụng (15 ngày)
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
       
       <div className="border-t pt-6">
         <div className="flex justify-end space-x-2">

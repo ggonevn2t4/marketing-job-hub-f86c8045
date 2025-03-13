@@ -15,7 +15,7 @@ import { AuthenticationRequired } from './AuthenticationRequired';
 import { JobFormSchema, type JobFormValues } from './JobPostingTypes';
 
 const JobPostingPage = () => {
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('job-form');
   
@@ -49,6 +49,30 @@ const JobPostingPage = () => {
   // If not logged in, show authentication required component
   if (!user) {
     return <AuthenticationRequired />;
+  }
+
+  // If user is not an employer, redirect to homepage
+  if (userRole !== 'employer') {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-4">Chỉ nhà tuyển dụng mới có thể đăng tin</h2>
+                <p className="mb-4">Tài khoản của bạn không phải là tài khoản nhà tuyển dụng.</p>
+                <button 
+                  onClick={() => navigate('/')}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+                >
+                  Quay lại trang chủ
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
   }
 
   return (
