@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,13 +18,12 @@ import LinkButton from "@/components/custom/LinkButton";
 import NotificationBell from "@/components/layout/NotificationBell";
 import { Briefcase, LogOut, LayoutDashboard, MessageSquare, User } from "lucide-react";
 import { UserRole } from "@/types/auth";
-import { CandidateProfile } from "@/types/profile";
-import { CompanyProfile } from "@/types/profile";
+import { CandidateProfile, CompanyProfile } from "@/types/profile";
 import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const { user, signOut } = useAuth();
-  const [profileData, setProfileData] = useState<CandidateProfile | CompanyProfile | null>(null);
+  const [profileData, setProfileData] = useState<Partial<CandidateProfile | CompanyProfile> | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -34,11 +32,8 @@ const Header = () => {
     const fetchProfile = async () => {
       if (user) {
         try {
-          let tableName = 'profiles' as const;
-          if (role === 'employer') {
-            tableName = 'companies' as const;
-          }
-
+          const tableName = role === 'employer' ? 'companies' : 'profiles';
+          
           const { data, error } = await supabase
             .from(tableName)
             .select('*')
@@ -47,8 +42,12 @@ const Header = () => {
 
           if (error) {
             console.error("Error fetching profile:", error);
-          } else {
-            setProfileData(data as CandidateProfile | CompanyProfile);
+          } else if (data) {
+            if (role === 'employer') {
+              setProfileData(data as CompanyProfile);
+            } else {
+              setProfileData(data as Partial<CandidateProfile>);
+            }
           }
         } catch (error) {
           console.error("Unexpected error fetching profile:", error);
@@ -103,26 +102,24 @@ const Header = () => {
     }
   };
 
-  // Helper function to get avatar URL from different profile types
   const getAvatarUrl = () => {
     if (!profileData) return '';
-    if ('avatar_url' in profileData) {
-      return profileData.avatar_url || '';
-    } else if ('logo' in profileData) {
-      return profileData.logo || '';
+    
+    if (role === 'employer') {
+      return (profileData as CompanyProfile)?.logo || '';
+    } else {
+      return (profileData as Partial<CandidateProfile>)?.avatar_url || '';
     }
-    return '';
   };
 
-  // Helper function to get name from different profile types
   const getProfileName = () => {
     if (!profileData) return user?.email || '';
-    if ('full_name' in profileData) {
-      return profileData.full_name || user?.email || '';
-    } else if ('name' in profileData) {
-      return profileData.name || user?.email || '';
+    
+    if (role === 'employer') {
+      return (profileData as CompanyProfile)?.name || user?.email || '';
+    } else {
+      return (profileData as Partial<CandidateProfile>)?.full_name || user?.email || '';
     }
-    return user?.email || '';
   };
 
   return (
