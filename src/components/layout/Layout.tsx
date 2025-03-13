@@ -7,9 +7,10 @@ import { useIsMobile, useIsTablet } from '@/hooks/use-mobile';
 
 interface LayoutProps {
   children: ReactNode;
+  withFilters?: boolean;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, withFilters = false }: LayoutProps) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -22,7 +23,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className={`flex-grow ${isMobile ? 'pt-16' : isTablet ? 'pt-18' : 'pt-20'}`}>
+      <main className={`flex-grow ${isMobile ? 'pt-16' : isTablet ? 'pt-18' : 'pt-20'} ${withFilters ? 'pb-24' : ''}`}>
         {children}
       </main>
       <Footer />

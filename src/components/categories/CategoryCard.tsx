@@ -9,6 +9,7 @@ interface CategoryCardProps {
   jobCount: number;
   slug: string;
   className?: string;
+  id?: string;
 }
 
 const CategoryCard = ({
@@ -16,14 +17,23 @@ const CategoryCard = ({
   icon,
   jobCount,
   slug,
+  id,
   className,
 }: CategoryCardProps) => {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   
+  // Chuẩn bị params cho URL tìm kiếm
+  const searchParams = new URLSearchParams();
+  if (id) {
+    searchParams.set('category', id);
+  } else if (slug) {
+    searchParams.set('category', slug);
+  }
+  
   return (
     <Link 
-      to={`/jobs?category=${slug}`}
+      to={`/jobs?${searchParams.toString()}`}
       className={cn(
         'block bg-card rounded-xl border p-6 transition-all duration-300 hover:shadow-md hover:border-primary/30 group',
         isMobile && 'p-4',

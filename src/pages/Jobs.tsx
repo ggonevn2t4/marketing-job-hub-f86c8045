@@ -29,12 +29,15 @@ const Jobs = () => {
   const jobType = searchParams.get('jobType') || '';
   const experienceLevel = searchParams.get('experienceLevel') || '';
   const salary = searchParams.get('salary') || '';
+  const salaryRangeParam = searchParams.get('salaryRange');
+  const salaryRange = salaryRangeParam ? JSON.parse(salaryRangeParam) as [number, number] : undefined;
   const featuredOnly = searchParams.get('featuredOnly') === 'true';
   
   const filters = {
     jobType: jobType || undefined,
     experienceLevel: experienceLevel || undefined,
     salary: salary || undefined,
+    salaryRange: salaryRange,
     featuredOnly: featuredOnly || undefined
   };
   
@@ -88,8 +91,16 @@ const Jobs = () => {
           query = query.eq('experience_level', experienceLevel);
         }
         
-        if (salary) {
-          query = query.eq('salary', salary);
+        // Xử lý filter theo mức lương 
+        if (salaryRange) {
+          const minSalary = `${salaryRange[0]} triệu`;
+          const maxSalary = `${salaryRange[1]} triệu`;
+          
+          // Tìm các công việc có mức lương trong khoảng chỉ định
+          // Đây là logic đơn giản, thực tế bạn cần xử lý phức tạp hơn để so sánh mức lương
+          query = query.or(`salary.ilike.%${minSalary}%,salary.ilike.%${maxSalary}%`);
+        } else if (salary) {
+          query = query.ilike('salary', `%${salary}%`);
         }
         
         if (featuredOnly) {
@@ -137,7 +148,7 @@ const Jobs = () => {
     };
     
     fetchJobs();
-  }, [keyword, location, category, jobType, experienceLevel, salary, featuredOnly]);
+  }, [keyword, location, category, jobType, experienceLevel, salary, salaryRange, featuredOnly]);
   
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -166,7 +177,12 @@ const Jobs = () => {
     // Cập nhật URL parameters với các filter mới
     Object.entries(newFilters).forEach(([key, value]) => {
       if (value) {
-        updatedParams.set(key, String(value));
+        if (key === 'salaryRange') {
+          // Lưu salaryRange dưới dạng chuỗi JSON trong URL
+          updatedParams.set(key, JSON.stringify(value));
+        } else {
+          updatedParams.set(key, String(value));
+        }
       } else {
         updatedParams.delete(key);
       }
@@ -187,11 +203,32 @@ const Jobs = () => {
   // Create title based on search parameters
   let title = 'Tất cả việc làm';
   if (category) {
-    title = `Việc làm ${category.replace('-', ' ')}`;
+    // Tìm tên danh mục từ ID
+    const categoryObj = categories.find(cat => cat.id === category);
+    if (categoryObj) {
+      title = `Việc làm ${categoryObj.name}`;
+    }
   }
   if (keyword) {
     title = `Kết quả tìm kiếm cho "${keyword}"`;
   }
+  
+  // Danh sách danh mục tạm thời (sẽ được thay thế bằng dữ liệu thực từ useEffect)
+  const [categories, setCategories] = useState<any[]>([]);
+  
+  // Fetch categories để hiển thị tên danh mục
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    
+    getCategories();
+  }, []);
   
   return (
     <Layout>
@@ -231,6 +268,7 @@ const Jobs = () => {
             {location ? ` tại ${location}` : ''}
             {jobType ? `, loại công việc: ${jobType}` : ''}
             {experienceLevel ? `, yêu cầu kinh nghiệm: ${experienceLevel}` : ''}
+            {salary ? `, mức lương: ${salary}` : ''}
           </p>
         </div>
         

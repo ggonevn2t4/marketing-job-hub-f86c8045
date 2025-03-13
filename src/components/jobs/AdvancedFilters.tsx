@@ -7,12 +7,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { X, FilterX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FiltersProps {
   filters: {
     jobType?: string;
     experienceLevel?: string;
     salary?: string;
+    salaryRange?: [number, number];
     featuredOnly?: boolean;
   };
   onFilterChange: (filters: any) => void;
@@ -21,6 +25,10 @@ interface FiltersProps {
 
 const AdvancedFilters = ({ filters, onFilterChange, onReset }: FiltersProps) => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [salarySliderValue, setSalarySliderValue] = useState<[number, number]>(
+    filters.salaryRange || [0, 50]
+  );
+  const isMobile = useIsMobile();
   
   const jobTypes = [
     { value: 'Toàn thời gian', label: 'Toàn thời gian' },
@@ -39,15 +47,6 @@ const AdvancedFilters = ({ filters, onFilterChange, onReset }: FiltersProps) => 
     { value: 'Cấp quản lý', label: 'Cấp quản lý' },
   ];
   
-  const salaryRanges = [
-    { value: 'Dưới 10 triệu', label: 'Dưới 10 triệu' },
-    { value: '10-20 triệu', label: '10-20 triệu' },
-    { value: '20-30 triệu', label: '20-30 triệu' },
-    { value: '30-50 triệu', label: '30-50 triệu' },
-    { value: 'Trên 50 triệu', label: 'Trên 50 triệu' },
-    { value: 'Thương lượng', label: 'Thương lượng' },
-  ];
-  
   const handleJobTypeChange = (value: string) => {
     const newFilters = { ...filters, jobType: value };
     onFilterChange(newFilters);
@@ -64,12 +63,24 @@ const AdvancedFilters = ({ filters, onFilterChange, onReset }: FiltersProps) => 
     updateActiveFilters('experienceLevel', value);
   };
   
-  const handleSalaryChange = (value: string) => {
-    const newFilters = { ...filters, salary: value };
+  const handleSalaryChange = (values: number[]) => {
+    setSalarySliderValue([values[0], values[1]]);
+    
+    // Chỉ cập nhật filter khi người dùng thả chuột
+    const minSalary = values[0];
+    const maxSalary = values[1];
+    
+    const salaryDisplay = `${minSalary}-${maxSalary} triệu`;
+    const newFilters = { 
+      ...filters, 
+      salary: salaryDisplay,
+      salaryRange: [minSalary, maxSalary]
+    };
+    
     onFilterChange(newFilters);
     
     // Cập nhật active filters
-    updateActiveFilters('salary', value);
+    updateActiveFilters('salary', salaryDisplay);
   };
   
   const handleFeaturedChange = (checked: boolean) => {
@@ -104,6 +115,7 @@ const AdvancedFilters = ({ filters, onFilterChange, onReset }: FiltersProps) => 
   const handleReset = () => {
     onReset();
     setActiveFilters([]);
+    setSalarySliderValue([0, 50]);
   };
   
   const getFilterLabel = (filterName: string) => {
@@ -180,17 +192,53 @@ const AdvancedFilters = ({ filters, onFilterChange, onReset }: FiltersProps) => 
           </div>
           
           <div>
-            <Label className="text-base font-medium mb-3 block">Mức lương</Label>
-            <RadioGroup value={filters.salary} onValueChange={handleSalaryChange}>
-              {salaryRanges.map(range => (
-                <div key={range.value} className="flex items-center space-x-2 py-1">
-                  <RadioGroupItem value={range.value} id={`salary-${range.value}`} />
-                  <Label htmlFor={`salary-${range.value}`} className="cursor-pointer">
-                    {range.label}
-                  </Label>
+            <Label className="text-base font-medium mb-3 block">Mức lương (triệu VNĐ)</Label>
+            <div className="px-3 pt-6 pb-2">
+              <Slider
+                defaultValue={salarySliderValue}
+                max={50}
+                step={1}
+                value={salarySliderValue}
+                onValueChange={handleSalaryChange}
+                className="mb-4"
+              />
+              <div className="flex items-center justify-between">
+                <div className="w-16">
+                  <Input
+                    type="number"
+                    value={salarySliderValue[0]}
+                    min={0}
+                    max={salarySliderValue[1]}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (value <= salarySliderValue[1]) {
+                        handleSalaryChange([value, salarySliderValue[1]]);
+                      }
+                    }}
+                    className="h-8 px-2"
+                  />
                 </div>
-              ))}
-            </RadioGroup>
+                <span>-</span>
+                <div className="w-16">
+                  <Input
+                    type="number"
+                    value={salarySliderValue[1]}
+                    min={salarySliderValue[0]}
+                    max={50}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (value >= salarySliderValue[0]) {
+                        handleSalaryChange([salarySliderValue[0], value]);
+                      }
+                    }}
+                    className="h-8 px-2"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {salarySliderValue[0]} - {salarySliderValue[1]} triệu VNĐ
+              </p>
+            </div>
           </div>
           
           <div>
