@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, User } from 'lucide-react';
+import { Menu, X, ChevronDown, User, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import LinkButton from '../custom/LinkButton';
 import { Button } from '@/components/ui/button';
@@ -104,6 +103,12 @@ const Header = () => {
                       <span>Việc làm đã lưu</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/messages" className="cursor-pointer">
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        <span>Tin nhắn</span>
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => logout()}>
                       Đăng xuất
                     </DropdownMenuItem>

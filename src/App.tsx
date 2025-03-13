@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +26,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Sitemap from "./pages/Sitemap";
 import ZapierIntegration from "./pages/ZapierIntegration";
+import Conversations from "./pages/Conversations";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +59,8 @@ const App = () => (
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/sitemap" element={<Sitemap />} />
               <Route path="/zapier-integration" element={<ZapierIntegration />} />
+              {/* Messaging */}
+              <Route path="/messages" element={<Conversations />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

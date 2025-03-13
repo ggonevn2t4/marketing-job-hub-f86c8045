@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSavedCandidates } from '@/hooks/useSavedCandidates';
 import type { CandidateProfile } from '@/types/profile';
+import MessageButton from '@/components/messaging/MessageButton';
 
 interface CandidateCardProps {
   candidate: CandidateProfile;
@@ -134,6 +135,11 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
                 <Button size="sm" variant="outline">
                   <Mail size={14} className="mr-1" /> Gửi email
                 </Button>
+                <MessageButton 
+                  recipientId={candidate.id}
+                  recipientName={candidate.full_name || 'Ứng viên'}
+                  recipientAvatar={candidate.avatar_url || undefined}
+                />
               </div>
               <div className="flex gap-2">
                 {showSaveButton && user && (
