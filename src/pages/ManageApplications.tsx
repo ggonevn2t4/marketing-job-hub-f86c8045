@@ -42,16 +42,19 @@ const ManageApplications = () => {
     try {
       setLoading(true);
       
-      // Lấy danh sách công việc của nhà tuyển dụng đó
-      const { data: companyData } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user?.id)
-        .single();
+      if (!user) return;
       
-      if (!companyData?.company_id) return;
+      // First, find the companies associated with this employer
+      const { data: companies } = await supabase
+        .from('companies')
+        .select('id')
+        .contains('metadata', { user_id: user.id });
       
-      // Lấy danh sách công việc và số lượng đơn ứng tuyển
+      if (!companies || companies.length === 0) return;
+      
+      const companyId = companies[0].id;
+      
+      // Now get jobs from this company along with application counts
       const { data, error } = await supabase
         .from('jobs')
         .select(`
@@ -59,7 +62,7 @@ const ManageApplications = () => {
           title,
           applications_count:job_applications(count)
         `)
-        .eq('company_id', companyData.company_id)
+        .eq('company_id', companyId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
