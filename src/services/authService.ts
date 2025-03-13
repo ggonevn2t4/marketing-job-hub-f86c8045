@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/auth';
+import { sendZapierEvent } from './zapierService';
 
 export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   // Use raw query to get user role
@@ -43,6 +44,20 @@ export const signUpUser = async (
       .insert([{ user_id: data.user.id, role: role }]);
 
     if (roleError) throw roleError;
+    
+    // Send event to Zapier if configured
+    try {
+      await sendZapierEvent('user_registration', {
+        user_id: data.user.id,
+        email: email,
+        full_name: fullName,
+        role: role,
+        registration_date: new Date().toISOString(),
+      });
+    } catch (zapierError) {
+      console.error('Error sending registration event to Zapier:', zapierError);
+      // Non-critical error, don't throw
+    }
   }
 
   return data;

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { sendZapierEvent } from '@/services/zapierService';
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: 'Tên cần ít nhất 2 ký tự' }),
@@ -74,6 +76,20 @@ const JobApplicationForm = ({ jobId, jobTitle, onSuccess }: JobApplicationFormPr
         });
       } catch (notifError) {
         console.error('Error sending notification:', notifError);
+      }
+      
+      // Send event to Zapier if configured
+      try {
+        await sendZapierEvent('job_application', {
+          job_id: jobId,
+          job_title: jobTitle,
+          applicant_name: values.full_name,
+          applicant_email: values.email,
+          application_date: new Date().toISOString(),
+        });
+      } catch (zapierError) {
+        console.error('Error sending event to Zapier:', zapierError);
+        // Non-critical error, don't show to user
       }
       
       toast({
