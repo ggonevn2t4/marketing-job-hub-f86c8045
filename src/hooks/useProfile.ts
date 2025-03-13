@@ -355,8 +355,8 @@ export const useProfile = () => {
     }
   };
 
-  const handleUploadResume = async (file: File) => {
-    if (!user) return '';
+  const handleUploadResume = async (file: File): Promise<void> => {
+    if (!user) return;
     
     try {
       setIsLoading(true);
@@ -375,8 +375,6 @@ export const useProfile = () => {
         title: 'Tải lên thành công',
         description: 'CV của bạn đã được tải lên',
       });
-      
-      return resumeUrl;
     } catch (error: any) {
       toast({
         title: 'Lỗi khi tải lên CV',

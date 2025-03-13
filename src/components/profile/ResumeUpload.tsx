@@ -199,7 +199,7 @@ const ResumeUpload = ({ resumeUrl, isLoading, onUpload, onDelete }: ResumeUpload
                 </Button>
               </div>
             </div>
-            <Alert variant="outline" className="mt-4">
+            <Alert>
               <AlertDescription>
                 Bạn có thể xóa CV hiện tại và tải lên một CV mới bằng cách nhấn vào nút xóa bên trên.
               </AlertDescription>

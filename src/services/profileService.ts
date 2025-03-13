@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { CandidateProfile, Education, Experience, Skill, CompanyProfile } from '@/types/profile';
 
@@ -205,6 +206,14 @@ export const uploadResume = async (userId: string, file: File): Promise<string> 
   const fileExt = file.name.split('.').pop();
   const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
   const filePath = `resumes/${fileName}`;
+  
+  // Tạo bucket nếu chưa tồn tại
+  const { data: bucketExists } = await supabase.storage.getBucket('resumes');
+  if (!bucketExists) {
+    await supabase.storage.createBucket('resumes', {
+      public: true
+    });
+  }
   
   // Tải file lên storage
   const { error: uploadError } = await supabase.storage
