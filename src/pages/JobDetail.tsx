@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +12,8 @@ import {
   Building, MapPin, Calendar, Clock, Award, Briefcase, 
   DollarSign, Share2, Bookmark, ShieldCheck 
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import useBookmarkJob from '@/hooks/useBookmarkJob';
 
 interface JobDetail {
   id: string;
@@ -45,6 +46,8 @@ interface JobDetail {
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { fetchSavedJobs, saveJob, unsaveJob, isJobSaved } = useBookmarkJob();
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +94,10 @@ const JobDetail = () => {
     };
     
     fetchJobDetail();
-  }, [id]);
+    if (user) {
+      fetchSavedJobs();
+    }
+  }, [id, user]);
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -108,6 +114,16 @@ const JobDetail = () => {
     setTimeout(() => {
       document.getElementById('application-form')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+  };
+  
+  const handleBookmarkClick = async () => {
+    if (!job) return;
+    
+    if (isJobSaved(job.id)) {
+      await unsaveJob(job.id);
+    } else {
+      await saveJob(job.id);
+    }
   };
   
   if (loading) {
@@ -219,13 +235,16 @@ const JobDetail = () => {
                   >
                     <Share2 size={18} />
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    className="rounded-full"
-                  >
-                    <Bookmark size={18} />
-                  </Button>
+                  {user && (
+                    <Button 
+                      variant={isJobSaved(job.id) ? "default" : "outline"}
+                      size="icon"
+                      className="rounded-full"
+                      onClick={handleBookmarkClick}
+                    >
+                      <Bookmark size={18} className={isJobSaved(job.id) ? "fill-white" : ""} />
+                    </Button>
+                  )}
                   <Button onClick={handleApplyClick}>
                     Ứng tuyển ngay
                   </Button>

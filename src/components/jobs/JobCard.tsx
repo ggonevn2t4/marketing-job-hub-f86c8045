@@ -3,7 +3,11 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { MapPin, Building, Clock, Briefcase } from 'lucide-react';
+import { MapPin, Building, Clock, Briefcase, Bookmark } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import useBookmarkJob from '@/hooks/useBookmarkJob';
+import { useEffect } from 'react';
 
 export interface JobProps {
   id: string;
@@ -18,6 +22,7 @@ export interface JobProps {
   isFeatured?: boolean;
   isHot?: boolean;
   isUrgent?: boolean;
+  showBookmark?: boolean;
 }
 
 const JobCard = ({
@@ -33,7 +38,28 @@ const JobCard = ({
   isFeatured = false,
   isHot = false,
   isUrgent = false,
+  showBookmark = true,
 }: JobProps) => {
+  const { user } = useAuth();
+  const { savedJobs, fetchSavedJobs, saveJob, unsaveJob, isJobSaved } = useBookmarkJob();
+  
+  useEffect(() => {
+    if (user && showBookmark) {
+      fetchSavedJobs();
+    }
+  }, [user, showBookmark]);
+  
+  const handleBookmarkClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isJobSaved(id)) {
+      await unsaveJob(id);
+    } else {
+      await saveJob(id);
+    }
+  };
+  
   return (
     <Link to={`/jobs/${id}`}>
       <Card className={cn(
@@ -100,6 +126,22 @@ const JobCard = ({
                     <Clock size={14} />
                     <span>{postedAt}</span>
                   </div>
+                  
+                  {showBookmark && user && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={handleBookmarkClick}
+                    >
+                      <Bookmark 
+                        size={16} 
+                        className={cn(
+                          isJobSaved(id) ? "fill-primary text-primary" : "text-muted-foreground"
+                        )} 
+                      />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

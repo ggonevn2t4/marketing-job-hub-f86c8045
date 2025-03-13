@@ -6,18 +6,43 @@ import { toast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
 import SearchBar from '@/components/jobs/SearchBar';
 import JobList from '@/components/jobs/JobList';
+import AdvancedFilters from '@/components/jobs/AdvancedFilters';
 import { JobProps } from '@/components/jobs/JobCard';
+import { useAuth } from '@/contexts/AuthContext';
+import useBookmarkJob from '@/hooks/useBookmarkJob';
+import { Button } from '@/components/ui/button';
+import { SlidersHorizontal } from 'lucide-react';
 
 const Jobs = () => {
-  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<JobProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const { fetchSavedJobs } = useBookmarkJob();
   
   // Parse search parameters
   const keyword = searchParams.get('q') || '';
   const location = searchParams.get('location') || '';
   const category = searchParams.get('category') || '';
+  const jobType = searchParams.get('jobType') || '';
+  const experienceLevel = searchParams.get('experienceLevel') || '';
+  const salary = searchParams.get('salary') || '';
+  const featuredOnly = searchParams.get('featuredOnly') === 'true';
+  
+  const filters = {
+    jobType: jobType || undefined,
+    experienceLevel: experienceLevel || undefined,
+    salary: salary || undefined,
+    featuredOnly: featuredOnly || undefined
+  };
+  
+  useEffect(() => {
+    if (user) {
+      fetchSavedJobs();
+    }
+  }, [user]);
   
   useEffect(() => {
     const fetchJobs = async () => {
@@ -38,8 +63,7 @@ const Jobs = () => {
             is_hot,
             is_urgent,
             created_at,
-            company:company_id (id, name, logo),
-            category:category_id (id, name, slug)
+            company:company_id (id, name, logo)
           `, { count: 'exact' });
         
         // Add filters based on search parameters
@@ -47,12 +71,29 @@ const Jobs = () => {
           query = query.ilike('title', `%${keyword}%`);
         }
         
-        if (location) {
+        if (location && location !== 'all') {
           query = query.eq('location', location);
         }
         
-        if (category) {
-          query = query.eq('category.slug', category);
+        if (category && category !== 'all') {
+          query = query.eq('category_id', category);
+        }
+        
+        // Add advanced filters
+        if (jobType) {
+          query = query.eq('job_type', jobType);
+        }
+        
+        if (experienceLevel) {
+          query = query.eq('experience_level', experienceLevel);
+        }
+        
+        if (salary) {
+          query = query.eq('salary', salary);
+        }
+        
+        if (featuredOnly) {
+          query = query.eq('is_featured', true);
         }
         
         // Order by created_at and is_featured
@@ -96,7 +137,7 @@ const Jobs = () => {
     };
     
     fetchJobs();
-  }, [keyword, location, category]);
+  }, [keyword, location, category, jobType, experienceLevel, salary, featuredOnly]);
   
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -119,6 +160,30 @@ const Jobs = () => {
     }
   };
   
+  const handleFilterChange = (newFilters: any) => {
+    const updatedParams = new URLSearchParams(searchParams);
+    
+    // Cập nhật URL parameters với các filter mới
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value) {
+        updatedParams.set(key, String(value));
+      } else {
+        updatedParams.delete(key);
+      }
+    });
+    
+    setSearchParams(updatedParams);
+  };
+  
+  const resetFilters = () => {
+    const basicParams = new URLSearchParams();
+    if (keyword) basicParams.set('q', keyword);
+    if (location && location !== 'all') basicParams.set('location', location);
+    if (category && category !== 'all') basicParams.set('category', category);
+    
+    setSearchParams(basicParams);
+  };
+  
   // Create title based on search parameters
   let title = 'Tất cả việc làm';
   if (category) {
@@ -133,6 +198,28 @@ const Jobs = () => {
       <div className="bg-muted/30 py-6">
         <div className="container mx-auto px-6">
           <SearchBar />
+          
+          <div className="mt-4 flex justify-end">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <SlidersHorizontal size={16} />
+              {showFilters ? 'Ẩn bộ lọc' : 'Hiện bộ lọc nâng cao'}
+            </Button>
+          </div>
+          
+          {showFilters && (
+            <div className="mt-4">
+              <AdvancedFilters 
+                filters={filters} 
+                onFilterChange={handleFilterChange} 
+                onReset={resetFilters} 
+              />
+            </div>
+          )}
         </div>
       </div>
       
@@ -142,6 +229,8 @@ const Jobs = () => {
           <p className="text-muted-foreground">
             {loading ? 'Đang tải...' : `Tìm thấy ${totalJobs} việc làm`}
             {location ? ` tại ${location}` : ''}
+            {jobType ? `, loại công việc: ${jobType}` : ''}
+            {experienceLevel ? `, yêu cầu kinh nghiệm: ${experienceLevel}` : ''}
           </p>
         </div>
         
@@ -157,6 +246,9 @@ const Jobs = () => {
             <p className="text-muted-foreground mb-6">
               Hãy thử thay đổi tiêu chí tìm kiếm của bạn hoặc quay lại sau
             </p>
+            <Button onClick={resetFilters}>
+              Xóa bộ lọc
+            </Button>
           </div>
         )}
       </div>
