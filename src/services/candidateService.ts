@@ -4,6 +4,10 @@ import type { CandidateProfile } from '@/types/profile';
 
 // Hàm lấy danh sách ứng viên với bộ lọc
 export const fetchCandidates = async (filters: any = {}) => {
+  // Get the current user ID first
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id || '';
+
   let query = supabase
     .from('profiles')
     .select(`
@@ -12,7 +16,7 @@ export const fetchCandidates = async (filters: any = {}) => {
       experience(*),
       education(*)
     `)
-    .eq('id', supabase.auth.getUser().then(response => response.data.user?.id) ?? '')
+    .eq('id', userId)
     .is('is_public', true);
 
   // Áp dụng các bộ lọc
