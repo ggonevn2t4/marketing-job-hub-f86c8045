@@ -59,7 +59,7 @@ const Companies = ({
         
         {showViewAll && (
           <LinkButton 
-            href="/companies" 
+            to="/companies" 
             variant="outline"
             showArrow
           >

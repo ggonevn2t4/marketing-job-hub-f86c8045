@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +27,22 @@ const Header = () => {
 
   const closeMenu = () => {
     setIsMenuOpen(false);
+  };
+
+  // Helper to get user display name and initials safely
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    return user.user_metadata?.full_name || '';
+  };
+
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    return name ? name.slice(0, 2) : 'U';
+  };
+
+  const getUserAvatarUrl = () => {
+    if (!user) return '';
+    return user.user_metadata?.avatar_url || '';
   };
 
   return (
@@ -65,8 +82,8 @@ const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar_url || ''} alt={user.full_name || 'User'} />
-                        <AvatarFallback>{user.full_name?.slice(0, 2) || 'U'}</AvatarFallback>
+                        <AvatarImage src={getUserAvatarUrl()} alt={getUserDisplayName()} />
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>

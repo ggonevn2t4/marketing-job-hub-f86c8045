@@ -82,7 +82,7 @@ const FeaturedJobs = () => {
           }}
         >
           <LinkButton 
-            href="/jobs" 
+            to="/jobs" 
             variant="outline"
             showArrow
           >
