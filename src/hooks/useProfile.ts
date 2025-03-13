@@ -72,7 +72,7 @@ export const useProfile = () => {
     }
   };
 
-  const handleAddEducation = async (data: Education) => {
+  const handleAddEducation = async (data: Omit<Education, 'user_id'>) => {
     if (!user) return;
     
     try {
@@ -166,7 +166,7 @@ export const useProfile = () => {
     }
   };
 
-  const handleAddExperience = async (data: Experience) => {
+  const handleAddExperience = async (data: Omit<Experience, 'user_id'>) => {
     if (!user) return;
     
     try {
@@ -260,7 +260,7 @@ export const useProfile = () => {
     }
   };
 
-  const handleAddSkill = async (data: Skill) => {
+  const handleAddSkill = async (data: Omit<Skill, 'user_id'>) => {
     if (!user) return;
     
     try {

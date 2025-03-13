@@ -1,7 +1,7 @@
 
 export interface Education {
   id?: string;
-  user_id?: string;
+  user_id: string;
   school: string;
   degree?: string;
   field_of_study?: string;
@@ -12,7 +12,7 @@ export interface Education {
 
 export interface Experience {
   id?: string;
-  user_id?: string;
+  user_id: string;
   company: string;
   position: string;
   location?: string;
@@ -24,7 +24,7 @@ export interface Experience {
 
 export interface Skill {
   id?: string;
-  user_id?: string;
+  user_id: string;
   name: string;
   level?: string;
 }
