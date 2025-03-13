@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import useBookmarkJob from '@/hooks/useBookmarkJob';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal } from 'lucide-react';
+import { fetchCategories } from '@/utils/supabaseQueries';
 
 const Jobs = () => {
   const { user } = useAuth();
@@ -21,6 +21,7 @@ const Jobs = () => {
   const [totalJobs, setTotalJobs] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const { fetchSavedJobs } = useBookmarkJob();
+  const [categories, setCategories] = useState<any[]>([]);
   
   // Parse search parameters
   const keyword = searchParams.get('q') || '';
@@ -46,6 +47,20 @@ const Jobs = () => {
       fetchSavedJobs();
     }
   }, [user]);
+  
+  // Fetch categories để hiển thị tên danh mục
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    
+    getCategories();
+  }, []);
   
   useEffect(() => {
     const fetchJobs = async () => {
@@ -212,23 +227,6 @@ const Jobs = () => {
   if (keyword) {
     title = `Kết quả tìm kiếm cho "${keyword}"`;
   }
-  
-  // Danh sách danh mục tạm thời (sẽ được thay thế bằng dữ liệu thực từ useEffect)
-  const [categories, setCategories] = useState<any[]>([]);
-  
-  // Fetch categories để hiển thị tên danh mục
-  useEffect(() => {
-    const getCategories = async () => {
-      try {
-        const data = await fetchCategories();
-        setCategories(data);
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      }
-    };
-    
-    getCategories();
-  }, []);
   
   return (
     <Layout>
