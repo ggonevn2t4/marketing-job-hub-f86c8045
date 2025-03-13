@@ -125,4 +125,53 @@
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600;
   }
+  
+  /* Mobile optimizations */
+  .mobile-container {
+    @apply px-4 sm:px-6 md:px-8;
+  }
+  
+  .mobile-card {
+    @apply p-3 sm:p-5;
+  }
+  
+  .mobile-text-base {
+    @apply text-sm sm:text-base;
+  }
+  
+  .mobile-text-lg {
+    @apply text-base sm:text-lg;
+  }
+  
+  .mobile-text-xl {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .mobile-text-2xl {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  .mobile-grid {
+    @apply grid-cols-1 sm:grid-cols-2 md:grid-cols-3;
+  }
+}
+
+/* Mobile-first media queries */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  .hidden-mobile {
+    display: none;
+  }
 }

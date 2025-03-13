@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import useBookmarkJob from '@/hooks/useBookmarkJob';
 import { useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface JobProps {
   id: string;
@@ -42,12 +43,13 @@ const JobCard = ({
 }: JobProps) => {
   const { user } = useAuth();
   const { savedJobs, fetchSavedJobs, saveJob, unsaveJob, isJobSaved } = useBookmarkJob();
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     if (user && showBookmark) {
       fetchSavedJobs();
     }
-  }, [user, showBookmark]);
+  }, [user, showBookmark, fetchSavedJobs]);
   
   const handleBookmarkClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -66,7 +68,7 @@ const JobCard = ({
         'overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30 group',
         isFeatured && 'border-primary/30 bg-primary/5'
       )}>
-        <CardContent className="p-5">
+        <CardContent className={cn("p-5", isMobile && "p-4")}>
           <div className="flex gap-4">
             <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 border">
               <img src={logo} alt={company} className="w-full h-full object-cover" />
@@ -103,7 +105,10 @@ const JobCard = ({
                 </div>
               </div>
               
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className={cn(
+                "mt-3 grid gap-2",
+                isMobile ? "grid-cols-1" : "grid-cols-2"
+              )}>
                 <div className="flex items-center text-sm text-muted-foreground gap-1">
                   <MapPin size={14} className="flex-shrink-0" />
                   <span className="truncate">{location}</span>
@@ -114,11 +119,19 @@ const JobCard = ({
                 </div>
               </div>
               
-              <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-y-2">
+              <div className={cn(
+                "mt-3 pt-3 border-t", 
+                isMobile 
+                  ? "flex flex-col space-y-2" 
+                  : "flex flex-wrap items-center justify-between gap-y-2"
+              )}>
                 <div className="font-medium text-foreground">
                   {salary}
                 </div>
-                <div className="flex items-center text-sm text-muted-foreground gap-2">
+                <div className={cn(
+                  "flex items-center text-sm text-muted-foreground gap-2",
+                  isMobile && "justify-between"
+                )}>
                   <Badge variant="secondary" className="font-normal">
                     {jobType}
                   </Badge>

@@ -2,6 +2,8 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface JobPackagesProps {
   selectedPackage: string;
@@ -9,10 +11,15 @@ interface JobPackagesProps {
 }
 
 export const JobPackages: React.FC<JobPackagesProps> = ({ selectedPackage, onSelectPackage }) => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Chọn gói dịch vụ</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={cn(
+        "grid gap-4",
+        isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"
+      )}>
         <PackageCard 
           id="basic"
           name="Cơ bản"
@@ -73,34 +80,43 @@ interface PackageCardProps {
 
 const PackageCard: React.FC<PackageCardProps> = ({ 
   id, name, price, duration, features, isSelected, onSelect, popular 
-}) => (
-  <Card 
-    className={`border hover:border-primary cursor-pointer transition-all ${isSelected ? 'border-primary ring-2 ring-primary ring-opacity-50' : ''} ${popular ? 'relative' : ''}`}
-    onClick={onSelect}
-  >
-    {popular && (
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded">
-        Phổ biến nhất
-      </div>
-    )}
-    <CardContent className="pt-6">
-      <div className="text-center mb-4">
-        <h4 className="text-lg font-bold">{name}</h4>
-        <p className="text-2xl font-bold mt-2">{price}</p>
-        <p className="text-sm text-muted-foreground">{duration}</p>
-      </div>
-      <ul className="space-y-2 text-sm">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-center">
-            <Badge variant="outline" className={`mr-2 ${feature.included ? 'bg-green-50' : ''}`}>
-              {feature.included ? '✓' : '✕'}
-            </Badge>
-            <span className={!feature.included ? 'text-muted-foreground' : ''}>
-              {feature.text}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </CardContent>
-  </Card>
-);
+}) => {
+  const isMobile = useIsMobile();
+  
+  return (
+    <Card 
+      className={cn(
+        "border hover:border-primary cursor-pointer transition-all",
+        isSelected ? 'border-primary ring-2 ring-primary ring-opacity-50' : '',
+        popular ? 'relative' : '',
+        isMobile && "px-4 py-4"
+      )}
+      onClick={onSelect}
+    >
+      {popular && (
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded z-10">
+          Phổ biến nhất
+        </div>
+      )}
+      <CardContent className={cn("pt-6", isMobile && "pt-4 px-2")}>
+        <div className="text-center mb-4">
+          <h4 className="text-lg font-bold">{name}</h4>
+          <p className="text-2xl font-bold mt-2">{price}</p>
+          <p className="text-sm text-muted-foreground">{duration}</p>
+        </div>
+        <ul className="space-y-2 text-sm">
+          {features.map((feature, index) => (
+            <li key={index} className="flex items-center">
+              <Badge variant="outline" className={`mr-2 ${feature.included ? 'bg-green-50' : ''}`}>
+                {feature.included ? '✓' : '✕'}
+              </Badge>
+              <span className={!feature.included ? 'text-muted-foreground' : ''}>
+                {feature.text}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+};
