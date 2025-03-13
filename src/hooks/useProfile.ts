@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +12,9 @@ import {
   deleteExperience,
   addSkill,
   updateSkill,
-  deleteSkill
+  deleteSkill,
+  uploadResume,
+  deleteResume
 } from '@/services/profileService';
 import type { CandidateProfile, Education, Experience, Skill } from '@/types/profile';
 
@@ -354,6 +355,72 @@ export const useProfile = () => {
     }
   };
 
+  const handleUploadResume = async (file: File) => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      const resumeUrl = await uploadResume(user.id, file);
+      
+      // Cập nhật state
+      setProfile(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          resume_url: resumeUrl
+        };
+      });
+      
+      toast({
+        title: 'Tải lên thành công',
+        description: 'CV của bạn đã được tải lên',
+      });
+      
+      return resumeUrl;
+    } catch (error: any) {
+      toast({
+        title: 'Lỗi khi tải lên CV',
+        description: error.message,
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteResume = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      await deleteResume(user.id);
+      
+      // Cập nhật state
+      setProfile(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          resume_url: null
+        };
+      });
+      
+      toast({
+        title: 'Xóa thành công',
+        description: 'CV của bạn đã được xóa',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Lỗi khi xóa CV',
+        description: error.message,
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     profile,
     isLoading,
@@ -366,6 +433,8 @@ export const useProfile = () => {
     handleDeleteExperience,
     handleAddSkill,
     handleUpdateSkill,
-    handleDeleteSkill
+    handleDeleteSkill,
+    handleUploadResume,
+    handleDeleteResume
   };
 };

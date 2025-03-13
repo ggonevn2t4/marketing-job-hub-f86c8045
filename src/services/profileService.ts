@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { CandidateProfile, Education, Experience, Skill, CompanyProfile } from '@/types/profile';
 
@@ -197,5 +196,77 @@ export const updateCompanyProfile = async (companyId: string, data: Partial<Comp
     .eq('id', companyId);
 
   if (error) throw error;
+  return true;
+};
+
+// Tải lên CV
+export const uploadResume = async (userId: string, file: File): Promise<string> => {
+  // Tạo tên file duy nhất
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `resumes/${fileName}`;
+  
+  // Tải file lên storage
+  const { error: uploadError } = await supabase.storage
+    .from('resumes')
+    .upload(filePath, file);
+    
+  if (uploadError) throw uploadError;
+  
+  // Lấy URL public
+  const { data } = supabase.storage
+    .from('resumes')
+    .getPublicUrl(filePath);
+    
+  const resumeUrl = data.publicUrl;
+  
+  // Cập nhật URL vào profile
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ resume_url: resumeUrl })
+    .eq('id', userId);
+    
+  if (updateError) throw updateError;
+  
+  return resumeUrl;
+};
+
+// Xóa CV
+export const deleteResume = async (userId: string) => {
+  // Lấy thông tin profile hiện tại
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('resume_url')
+    .eq('id', userId)
+    .single();
+    
+  if (fetchError) throw fetchError;
+  
+  // Nếu có file, xóa từ storage
+  if (profile?.resume_url) {
+    // Lấy tên file từ URL
+    const url = new URL(profile.resume_url);
+    const path = url.pathname;
+    const filePath = path.split('/').slice(2).join('/'); // Bỏ qua /storage/v1/
+    
+    // Xóa file
+    const { error: deleteError } = await supabase.storage
+      .from('resumes')
+      .remove([filePath]);
+      
+    if (deleteError) {
+      console.error('Error deleting file:', deleteError);
+      // Tiếp tục xử lý ngay cả khi xóa file bị lỗi
+    }
+  }
+  
+  // Cập nhật profile để xóa URL
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ resume_url: null })
+    .eq('id', userId);
+    
+  if (updateError) throw updateError;
+  
   return true;
 };
