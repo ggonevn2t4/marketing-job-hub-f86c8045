@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Search, Menu, X } from 'lucide-react';
+import { Search, Menu, X, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, userRole, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +32,10 @@ const Header = () => {
     { title: 'Blog', path: '/blog' },
     { title: 'Về chúng tôi', path: '/about' },
   ];
+
+  if (user && userRole === 'candidate') {
+    navItems.push({ title: 'Việc làm đã ứng tuyển', path: '/application-tracker' });
+  }
 
   return (
     <header
@@ -72,7 +78,23 @@ const Header = () => {
               <Search size={16} />
               <span>Tìm kiếm</span>
             </Button>
-            <Button className="rounded-full">Đăng nhập</Button>
+            
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Button size="sm" variant="ghost" className="gap-2">
+                  <User size={16} />
+                  <span>{userRole === 'candidate' ? 'Ứng viên' : 'Nhà tuyển dụng'}</span>
+                </Button>
+                <Button size="sm" variant="outline" onClick={signOut} className="gap-2">
+                  <LogOut size={16} />
+                  <span>Đăng xuất</span>
+                </Button>
+              </div>
+            ) : (
+              <Button className="rounded-full" asChild>
+                <Link to="/auth">Đăng nhập / Đăng ký</Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -109,7 +131,23 @@ const Header = () => {
                 <Search size={16} />
                 <span>Tìm kiếm</span>
               </Button>
-              <Button>Đăng nhập</Button>
+              
+              {user ? (
+                <>
+                  <Button variant="ghost" className="justify-start gap-2">
+                    <User size={16} />
+                    <span>{userRole === 'candidate' ? 'Ứng viên' : 'Nhà tuyển dụng'}</span>
+                  </Button>
+                  <Button variant="outline" onClick={signOut} className="justify-start gap-2">
+                    <LogOut size={16} />
+                    <span>Đăng xuất</span>
+                  </Button>
+                </>
+              ) : (
+                <Button asChild>
+                  <Link to="/auth">Đăng nhập / Đăng ký</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
