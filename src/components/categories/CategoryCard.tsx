@@ -1,7 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile, useIsTablet } from '@/hooks/use-mobile';
 
 interface CategoryCardProps {
   title: string;
@@ -19,6 +19,7 @@ const CategoryCard = ({
   className,
 }: CategoryCardProps) => {
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   
   return (
     <Link 
