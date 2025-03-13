@@ -1,115 +1,69 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MapPin, Briefcase } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const SearchBar = () => {
-  const navigate = useNavigate();
-  const [keyword, setKeyword] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
-  
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Construct query parameters
-    const params = new URLSearchParams();
-    if (keyword) params.append('q', keyword);
-    if (location) params.append('location', location);
-    if (category) params.append('category', category);
-    
-    // Navigate to jobs page with search params
-    navigate({
-      pathname: '/jobs',
-      search: params.toString()
-    });
+    // Handle search logic here
+    console.log('Searching for:', { searchTerm, location, category });
   };
-  
-  // Marketing job categories
-  const categories = [
-    { value: 'digital-marketing', label: 'Digital Marketing' },
-    { value: 'content-marketing', label: 'Content Marketing' },
-    { value: 'social-media', label: 'Social Media Marketing' },
-    { value: 'seo-sem', label: 'SEO/SEM' },
-    { value: 'email-marketing', label: 'Email Marketing' },
-    { value: 'brand-marketing', label: 'Brand Marketing' },
-    { value: 'analytics', label: 'Marketing Analytics' },
-    { value: 'tiktok-marketing', label: 'TikTok Marketing' },
-    { value: 'facebook-ads', label: 'Facebook Ads' },
-    { value: 'google-ads', label: 'Google Ads' },
-  ];
-  
-  // Popular locations
-  const locations = [
-    { value: 'ho-chi-minh', label: 'TP. Hồ Chí Minh' },
-    { value: 'ha-noi', label: 'Hà Nội' },
-    { value: 'da-nang', label: 'Đà Nẵng' },
-    { value: 'remote', label: 'Remote' },
-    { value: 'hybrid', label: 'Hybrid' },
-  ];
-  
+
   return (
-    <form onSubmit={handleSearch} className="w-full bg-white rounded-2xl shadow-lg p-6 border transition-all">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-5">
-          <div className="flex items-center h-full border rounded-lg px-3 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-            <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <Input
-              type="text"
-              placeholder="Tên công việc, kỹ năng, từ khóa..."
-              className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
-          </div>
+    <form onSubmit={handleSearch} className="w-full">
+      <div className="bg-card rounded-xl shadow-md p-3 flex flex-col md:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Input
+            type="text"
+            placeholder="Vị trí, từ khóa..."
+            className="pl-10 py-6"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
         </div>
         
-        <div className="lg:col-span-3">
-          <div className="flex items-center h-full border rounded-lg px-3 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-            <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <Select value={location} onValueChange={setLocation}>
-              <SelectTrigger className="border-0 focus:ring-0 p-0 h-full">
-                <SelectValue placeholder="Địa điểm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Tất cả địa điểm</SelectItem>
-                {locations.map((loc) => (
-                  <SelectItem key={loc.value} value={loc.value}>
-                    {loc.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:w-[50%]">
+          <Select value={location} onValueChange={setLocation}>
+            <SelectTrigger className="py-6">
+              <SelectValue placeholder="Địa điểm" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả địa điểm</SelectItem>
+              <SelectItem value="ho-chi-minh">TP. Hồ Chí Minh</SelectItem>
+              <SelectItem value="hanoi">Hà Nội</SelectItem>
+              <SelectItem value="danang">Đà Nẵng</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="py-6">
+              <SelectValue placeholder="Chuyên ngành" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả chuyên ngành</SelectItem>
+              <SelectItem value="digital-marketing">Digital Marketing</SelectItem>
+              <SelectItem value="content-marketing">Content Marketing</SelectItem>
+              <SelectItem value="social-media">Social Media</SelectItem>
+              <SelectItem value="seo-sem">SEO/SEM</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        
-        <div className="lg:col-span-3">
-          <div className="flex items-center h-full border rounded-lg px-3 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-            <Briefcase className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="border-0 focus:ring-0 p-0 h-full">
-                <SelectValue placeholder="Chuyên ngành" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Tất cả chuyên ngành</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="lg:col-span-1">
-          <Button type="submit" className="w-full h-full">
-            Tìm kiếm
-          </Button>
-        </div>
+
+        <Button type="submit" className="py-6 px-8">Tìm kiếm</Button>
       </div>
     </form>
   );
