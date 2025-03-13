@@ -74,8 +74,9 @@ const FindCandidates = () => {
     if (sortOrder === 'latest') {
       // Sắp xếp theo thời gian tạo tài khoản mới nhất (ví dụ đơn giản)
       return [...candidatesList].sort((a, b) => {
-        const dateA = new Date(a.updated_at || 0).getTime();
-        const dateB = new Date(b.updated_at || 0).getTime();
+        // Sử dụng created_at thay vì updated_at vì CandidateProfile có created_at
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
         return dateB - dateA;
       });
     } else if (sortOrder === 'relevant') {

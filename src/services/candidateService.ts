@@ -12,7 +12,7 @@ export const fetchCandidates = async (filters: any = {}) => {
       experience(*),
       education(*)
     `)
-    .eq('id', supabase.auth.auth.currentSession?.user?.id ?? '')
+    .eq('id', supabase.auth.getUser().then(response => response.data.user?.id) ?? '')
     .is('is_public', true);
 
   // Áp dụng các bộ lọc
@@ -40,15 +40,17 @@ export const fetchCandidates = async (filters: any = {}) => {
     throw error;
   }
 
-  return data as CandidateProfile[];
+  return data as unknown as CandidateProfile[];
 };
 
 // Hàm lưu ứng viên (save candidate) cho nhà tuyển dụng
 export const saveCandidate = async (candidateId: string, notes?: string) => {
+  const { data: userData } = await supabase.auth.getUser();
+  
   const { data, error } = await supabase
     .from('saved_candidates')
     .insert({
-      employer_id: supabase.auth.auth.currentSession?.user?.id,
+      employer_id: userData.user?.id,
       candidate_id: candidateId,
       notes
     })
@@ -64,10 +66,12 @@ export const saveCandidate = async (candidateId: string, notes?: string) => {
 
 // Hàm bỏ lưu ứng viên
 export const unsaveCandidate = async (candidateId: string) => {
+  const { data: userData } = await supabase.auth.getUser();
+  
   const { error } = await supabase
     .from('saved_candidates')
     .delete()
-    .eq('employer_id', supabase.auth.auth.currentSession?.user?.id)
+    .eq('employer_id', userData.user?.id)
     .eq('candidate_id', candidateId);
 
   if (error) {
@@ -80,10 +84,12 @@ export const unsaveCandidate = async (candidateId: string) => {
 
 // Hàm kiểm tra xem ứng viên đã được lưu chưa
 export const isCandidateSaved = async (candidateId: string) => {
+  const { data: userData } = await supabase.auth.getUser();
+  
   const { data, error } = await supabase
     .from('saved_candidates')
     .select('id')
-    .eq('employer_id', supabase.auth.auth.currentSession?.user?.id)
+    .eq('employer_id', userData.user?.id)
     .eq('candidate_id', candidateId)
     .maybeSingle();
 
@@ -97,6 +103,8 @@ export const isCandidateSaved = async (candidateId: string) => {
 
 // Hàm lấy danh sách ứng viên đã lưu
 export const fetchSavedCandidates = async () => {
+  const { data: userData } = await supabase.auth.getUser();
+  
   const { data, error } = await supabase
     .from('saved_candidates')
     .select(`
@@ -108,7 +116,7 @@ export const fetchSavedCandidates = async () => {
         education(*)
       )
     `)
-    .eq('employer_id', supabase.auth.auth.currentSession?.user?.id);
+    .eq('employer_id', userData.user?.id);
 
   if (error) {
     console.error('Error fetching saved candidates:', error);
