@@ -1,487 +1,400 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import React from 'react';
 import Layout from '@/components/layout/Layout';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { fetchCategories } from '@/utils/supabaseQueries';
-import { useEffect } from 'react';
-
-const formSchema = z.object({
-  title: z.string().min(5, { message: 'Tiêu đề phải có ít nhất 5 ký tự' }),
-  category_id: z.string().min(1, { message: 'Vui lòng chọn chuyên ngành' }),
-  location: z.string().min(2, { message: 'Vui lòng nhập địa điểm làm việc' }),
-  job_type: z.string().min(1, { message: 'Vui lòng chọn loại công việc' }),
-  experience_level: z.string().min(1, { message: 'Vui lòng chọn yêu cầu kinh nghiệm' }),
-  salary: z.string().min(1, { message: 'Vui lòng nhập mức lương' }),
-  description: z.string().min(50, { message: 'Mô tả phải có ít nhất 50 ký tự' }),
-  requirements: z.string().min(50, { message: 'Yêu cầu phải có ít nhất 50 ký tự' }),
-  benefits: z.string().min(50, { message: 'Quyền lợi phải có ít nhất 50 ký tự' }),
-  is_featured: z.boolean().default(false),
-  is_hot: z.boolean().default(false),
-  is_urgent: z.boolean().default(false),
-});
-
-type PostJobFormValues = z.infer<typeof formSchema>;
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { FilePlus, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const PostJob = () => {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<any[]>([]);
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm<PostJobFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-      category_id: '',
-      location: '',
-      job_type: '',
-      experience_level: '',
-      salary: '',
-      description: '',
-      requirements: '',
-      benefits: '',
-      is_featured: false,
-      is_hot: false,
-      is_urgent: false,
-    },
-  });
-  
-  useEffect(() => {
-    // Kiểm tra xem user có phải là nhà tuyển dụng không
-    if (user && userRole !== 'employer') {
-      toast({
-        title: 'Không có quyền truy cập',
-        description: 'Bạn cần đăng nhập với tài khoản nhà tuyển dụng để đăng tin tuyển dụng',
-        variant: 'destructive',
-      });
-      navigate('/');
-      return;
-    }
-    
-    const loadData = async () => {
-      try {
-        // Lấy danh sách chuyên ngành
-        const categoriesData = await fetchCategories();
-        setCategories(categoriesData);
-        
-        // Lấy thông tin công ty của nhà tuyển dụng
-        if (user) {
-          const { data, error } = await supabase
-            .from('companies')
-            .select('id')
-            .eq('id', user.id)
-            .single();
-            
-          if (error) {
-            console.error('Error fetching company info:', error);
-            
-            // Nếu không tìm thấy công ty, chuyển hướng đến trang tạo hồ sơ công ty
-            if (error.code === 'PGRST116') {
-              toast({
-                title: 'Cần tạo hồ sơ công ty',
-                description: 'Bạn cần tạo hồ sơ công ty trước khi đăng tin tuyển dụng',
-                variant: 'destructive',
-              });
-              navigate('/company-profile');
-              return;
-            }
-            
-            throw error;
-          }
-          
-          if (data) {
-            setCompanyId(data.id);
-          }
-        }
-      } catch (err) {
-        console.error('Error loading initial data:', err);
-      }
-    };
-    
-    loadData();
-  }, [user, userRole, navigate]);
-  
-  const onSubmit = async (values: PostJobFormValues) => {
-    if (!user || !companyId) {
-      toast({
-        title: 'Lỗi',
-        description: 'Bạn cần đăng nhập và tạo hồ sơ công ty trước',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      // Đảm bảo tất cả các trường bắt buộc đều có mặt
-      const jobData = {
-        company_id: companyId,
-        title: values.title,
-        category_id: values.category_id,
-        location: values.location,
-        job_type: values.job_type,
-        experience_level: values.experience_level,
-        salary: values.salary,
-        description: values.description,
-        requirements: values.requirements,
-        benefits: values.benefits,
-        is_featured: values.is_featured,
-        is_hot: values.is_hot,
-        is_urgent: values.is_urgent
-      };
-      
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert(jobData)
-        .select('id')
-        .single();
-        
-      if (error) throw error;
-      
-      if (data) {
-        toast({
-          title: 'Thành công',
-          description: 'Đăng tin tuyển dụng thành công',
-        });
-        navigate(`/jobs/${data.id}`);
-      }
-    } catch (err: any) {
-      console.error('Error posting job:', err);
-      toast({
-        title: 'Lỗi',
-        description: err.message || 'Có lỗi xảy ra khi đăng tin tuyển dụng',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
+
+  // If not logged in, prompt to login
+  if (!user) {
+    return (
+      <Layout>
+        <div className="container mx-auto py-12 px-4">
+          <Card className="max-w-3xl mx-auto shadow-lg">
+            <CardContent className="p-8">
+              <div className="text-center mb-6">
+                <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+                <h1 className="text-2xl font-bold mb-2">Đăng nhập để tiếp tục</h1>
+                <p className="text-muted-foreground">
+                  Bạn cần đăng nhập để đăng tin tuyển dụng trên TopMarketingJobs
+                </p>
+              </div>
+              <div className="flex justify-center space-x-4 mt-6">
+                <Button onClick={() => navigate('/auth')} size="lg">
+                  Đăng nhập ngay
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/')} size="lg">
+                  Quay lại trang chủ
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="container mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-2">Đăng tin tuyển dụng mới</h1>
-          <p className="text-muted-foreground">
-            Điền đầy đủ thông tin để đăng tin tuyển dụng của bạn
-          </p>
-        </div>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tiêu đề tin tuyển dụng *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ví dụ: Frontend Developer, Marketing Manager..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="category_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Chuyên ngành *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Chọn chuyên ngành" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map(category => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Địa điểm làm việc *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ví dụ: TP. Hồ Chí Minh, Hà Nội..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="job_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Loại công việc *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Chọn loại công việc" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Toàn thời gian">Toàn thời gian</SelectItem>
-                            <SelectItem value="Bán thời gian">Bán thời gian</SelectItem>
-                            <SelectItem value="Thực tập">Thực tập</SelectItem>
-                            <SelectItem value="Làm việc từ xa">Làm việc từ xa</SelectItem>
-                            <SelectItem value="Hợp đồng">Hợp đồng</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="experience_level"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Yêu cầu kinh nghiệm *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Chọn yêu cầu kinh nghiệm" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Mới tốt nghiệp">Mới tốt nghiệp</SelectItem>
-                            <SelectItem value="Dưới 1 năm">Dưới 1 năm</SelectItem>
-                            <SelectItem value="1-3 năm">1-3 năm</SelectItem>
-                            <SelectItem value="3-5 năm">3-5 năm</SelectItem>
-                            <SelectItem value="5+ năm">5+ năm</SelectItem>
-                            <SelectItem value="Cấp quản lý">Cấp quản lý</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="salary"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mức lương *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ví dụ: 15-20 triệu, Trên 30 triệu, Thương lượng..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <Tabs defaultValue="description" className="w-full">
-                  <TabsList className="mb-6">
-                    <TabsTrigger value="description">Mô tả công việc</TabsTrigger>
-                    <TabsTrigger value="requirements">Yêu cầu</TabsTrigger>
-                    <TabsTrigger value="benefits">Quyền lợi</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="description" className="mt-0">
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mô tả công việc chi tiết *</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Mô tả chi tiết về công việc, trách nhiệm, nhiệm vụ..." 
-                              className="min-h-[200px]" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="requirements" className="mt-0">
-                    <FormField
-                      control={form.control}
-                      name="requirements"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Yêu cầu ứng viên *</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Các yêu cầu về kỹ năng, kinh nghiệm, trình độ học vấn..." 
-                              className="min-h-[200px]" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="benefits" className="mt-0">
-                    <FormField
-                      control={form.control}
-                      name="benefits"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quyền lợi *</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Các quyền lợi, chế độ, môi trường làm việc..." 
-                              className="min-h-[200px]" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Tùy chọn nâng cao</h3>
-                
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="is_featured"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Tin nổi bật</FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                            Tin tuyển dụng sẽ được hiển thị nổi bật trên trang chủ
-                          </p>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="is_hot"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Tin Hot</FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                            Hiển thị nhãn "Hot" trên tin tuyển dụng của bạn
-                          </p>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="is_urgent"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Tin gấp</FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                            Hiển thị nhãn "Gấp" trên tin tuyển dụng của bạn
-                          </p>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/jobs')}
-                disabled={isSubmitting}
-              >
-                Hủy
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Đang đăng tin...' : 'Đăng tin tuyển dụng'}
-              </Button>
+      <div className="bg-muted/30 py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-10 text-center">
+              <FilePlus className="w-16 h-16 text-primary mx-auto mb-4" />
+              <h1 className="text-3xl font-bold mb-3">Đăng tin tuyển dụng</h1>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Tiếp cận hàng ngàn ứng viên Marketing tiềm năng và quảng bá thương hiệu nhà tuyển dụng của bạn với TopMarketingJobs
+              </p>
             </div>
-          </form>
-        </Form>
+
+            <Tabs defaultValue="job-form" className="space-y-8">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="job-form">Thông tin tuyển dụng</TabsTrigger>
+                <TabsTrigger value="company-details">Thông tin công ty</TabsTrigger>
+                <TabsTrigger value="preview">Xem trước & Thanh toán</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="job-form" className="space-y-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <form className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Chức danh công việc <span className="text-red-500">*</span></label>
+                          <input 
+                            type="text" 
+                            className="w-full rounded-md border border-input bg-background px-3 py-2"
+                            placeholder="VD: Marketing Manager"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Ngành nghề <span className="text-red-500">*</span></label>
+                          <select className="w-full rounded-md border border-input bg-background px-3 py-2">
+                            <option value="">Chọn ngành nghề</option>
+                            <option value="digital-marketing">Digital Marketing</option>
+                            <option value="brand-marketing">Brand Marketing</option>
+                            <option value="content-marketing">Content Marketing</option>
+                            <option value="seo">SEO</option>
+                            <option value="sem">SEM</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Loại hình công việc <span className="text-red-500">*</span></label>
+                          <select className="w-full rounded-md border border-input bg-background px-3 py-2">
+                            <option value="">Chọn loại hình</option>
+                            <option value="full-time">Toàn thời gian</option>
+                            <option value="part-time">Bán thời gian</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="remote">Remote</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Kinh nghiệm <span className="text-red-500">*</span></label>
+                          <select className="w-full rounded-md border border-input bg-background px-3 py-2">
+                            <option value="">Chọn kinh nghiệm</option>
+                            <option value="fresher">Fresher (0-1 năm)</option>
+                            <option value="junior">Junior (1-2 năm)</option>
+                            <option value="middle">Middle (2-5 năm)</option>
+                            <option value="senior">Senior (5+ năm)</option>
+                            <option value="manager">Manager (7+ năm)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Địa điểm làm việc <span className="text-red-500">*</span></label>
+                          <input 
+                            type="text" 
+                            className="w-full rounded-md border border-input bg-background px-3 py-2"
+                            placeholder="VD: Quận 1, TP.HCM"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Mức lương (tháng)</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input 
+                              type="text" 
+                              className="w-full rounded-md border border-input bg-background px-3 py-2"
+                              placeholder="Từ"
+                            />
+                            <input 
+                              type="text" 
+                              className="w-full rounded-md border border-input bg-background px-3 py-2"
+                              placeholder="Đến"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Mô tả công việc <span className="text-red-500">*</span></label>
+                        <textarea 
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 min-h-32"
+                          placeholder="Mô tả chi tiết về công việc, trách nhiệm..."
+                          required
+                        ></textarea>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Yêu cầu ứng viên <span className="text-red-500">*</span></label>
+                        <textarea 
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 min-h-32"
+                          placeholder="Kỹ năng, trình độ học vấn, kinh nghiệm..."
+                          required
+                        ></textarea>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Quyền lợi</label>
+                        <textarea 
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 min-h-32"
+                          placeholder="Chế độ lương thưởng, bảo hiểm, đào tạo..."
+                        ></textarea>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button type="button">Tiếp tục</Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="company-details">
+                <Card>
+                  <CardContent className="pt-6">
+                    <form className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Tên công ty <span className="text-red-500">*</span></label>
+                        <input 
+                          type="text" 
+                          className="w-full rounded-md border border-input bg-background px-3 py-2"
+                          placeholder="VD: TopMarketingJobs"
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Email liên hệ <span className="text-red-500">*</span></label>
+                          <input 
+                            type="email" 
+                            className="w-full rounded-md border border-input bg-background px-3 py-2"
+                            placeholder="Email nhận CV ứng viên"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Số điện thoại</label>
+                          <input 
+                            type="tel" 
+                            className="w-full rounded-md border border-input bg-background px-3 py-2"
+                            placeholder="Số điện thoại liên hệ"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Logo công ty</label>
+                        <div className="border border-dashed border-gray-300 rounded-lg p-8 text-center">
+                          <div className="flex flex-col items-center">
+                            <Button variant="outline" size="sm">Tải lên Logo</Button>
+                            <p className="text-xs text-muted-foreground mt-2">PNG, JPG hoặc SVG (Tối đa 1MB)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Website công ty</label>
+                        <input 
+                          type="url" 
+                          className="w-full rounded-md border border-input bg-background px-3 py-2"
+                          placeholder="https://www.company.com"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Giới thiệu công ty</label>
+                        <textarea 
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 min-h-32"
+                          placeholder="Mô tả về công ty, văn hóa, sứ mệnh..."
+                        ></textarea>
+                      </div>
+
+                      <div className="flex justify-end space-x-2">
+                        <Button variant="outline">Quay lại</Button>
+                        <Button type="button">Tiếp tục</Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="preview">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="space-y-6">
+                      <Alert>
+                        <AlertTitle className="text-lg font-semibold">Xem trước tin tuyển dụng</AlertTitle>
+                        <AlertDescription>
+                          Vui lòng kiểm tra lại nội dung trước khi đăng tuyển
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <div className="border rounded-lg p-6 space-y-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="bg-gray-100 w-16 h-16 rounded flex items-center justify-center">
+                            <span className="text-xl font-bold text-gray-400">Logo</span>
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold">Marketing Manager</h3>
+                            <p className="text-muted-foreground">TopMarketingJobs</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Vị trí:</span>
+                            <span>Marketing Manager</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Loại hình:</span>
+                            <span>Toàn thời gian</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Kinh nghiệm:</span>
+                            <span>3-5 năm</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Địa điểm:</span>
+                            <span>Quận 1, TP.HCM</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Mức lương:</span>
+                            <span>15,000,000 - 25,000,000 VNĐ</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Gói dịch vụ</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="border rounded-lg p-4 hover:border-primary cursor-pointer transition-all">
+                            <div className="text-center mb-4">
+                              <h4 className="text-lg font-bold">Cơ bản</h4>
+                              <p className="text-2xl font-bold mt-2">1,000,000 VNĐ</p>
+                              <p className="text-sm text-muted-foreground">30 ngày</p>
+                            </div>
+                            <ul className="space-y-2 text-sm">
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Hiển thị 30 ngày
+                              </li>
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Tiếp cận không giới hạn ứng viên
+                              </li>
+                              <li className="flex items-center text-muted-foreground">
+                                <svg className="w-4 h-4 mr-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Đẩy tin tuyển dụng
+                              </li>
+                            </ul>
+                          </div>
+                          
+                          <div className="border-2 border-primary rounded-lg p-4 relative">
+                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded">
+                              Phổ biến nhất
+                            </div>
+                            <div className="text-center mb-4">
+                              <h4 className="text-lg font-bold">Nâng cao</h4>
+                              <p className="text-2xl font-bold mt-2">2,500,000 VNĐ</p>
+                              <p className="text-sm text-muted-foreground">30 ngày</p>
+                            </div>
+                            <ul className="space-y-2 text-sm">
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Hiển thị 30 ngày
+                              </li>
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Tiếp cận không giới hạn ứng viên
+                              </li>
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Đẩy tin tuyển dụng (7 ngày)
+                              </li>
+                            </ul>
+                          </div>
+                          
+                          <div className="border rounded-lg p-4 hover:border-primary cursor-pointer transition-all">
+                            <div className="text-center mb-4">
+                              <h4 className="text-lg font-bold">Premium</h4>
+                              <p className="text-2xl font-bold mt-2">5,000,000 VNĐ</p>
+                              <p className="text-sm text-muted-foreground">30 ngày</p>
+                            </div>
+                            <ul className="space-y-2 text-sm">
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Hiển thị 30 ngày
+                              </li>
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Tiếp cận không giới hạn ứng viên
+                              </li>
+                              <li className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Đẩy tin tuyển dụng (15 ngày)
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t pt-6">
+                        <div className="flex justify-end space-x-2">
+                          <Button variant="outline">Quay lại</Button>
+                          <Button>Thanh toán & Đăng tuyển</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </Layout>
   );
