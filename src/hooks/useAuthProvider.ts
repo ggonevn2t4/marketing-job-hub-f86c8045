@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -96,7 +95,7 @@ export const useAuthProvider = () => {
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (redirectPath = '/') => {
     try {
       setIsLoading(true);
       await signOutUser();
@@ -108,7 +107,7 @@ export const useAuthProvider = () => {
         title: "Đăng xuất thành công",
       });
       
-      navigate('/');
+      navigate(redirectPath);
     } catch (error: any) {
       toast({
         title: "Đăng xuất thất bại",
@@ -120,6 +119,8 @@ export const useAuthProvider = () => {
     }
   };
 
+  const logout = signOut;
+
   return {
     user,
     session,
@@ -128,5 +129,6 @@ export const useAuthProvider = () => {
     signUp,
     signIn,
     signOut,
+    logout,
   };
 };

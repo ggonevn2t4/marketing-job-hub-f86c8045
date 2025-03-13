@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,11 +18,11 @@ const formSchema = z.object({
   cover_letter: z.string().optional(),
 });
 
-type JobApplicationFormProps = {
+interface JobApplicationFormProps {
   jobId: string;
-  jobTitle: string;
-  onSuccess?: () => void;
-};
+  jobTitle?: string;
+  onSuccess: () => void;
+}
 
 const JobApplicationForm = ({ jobId, jobTitle, onSuccess }: JobApplicationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);

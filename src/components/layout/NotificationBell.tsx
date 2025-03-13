@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 export type Notification = {
   id: string;
@@ -47,7 +48,7 @@ export const useNotifications = () => {
 
         if (error) throw error;
 
-        setNotifications(data || []);
+        setNotifications(data as Notification[] || []);
         setUnreadCount(data?.filter(n => !n.read).length || 0);
       } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -70,14 +71,14 @@ export const useNotifications = () => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          setNotifications(prev => [payload.new as Notification, ...prev]);
+          const newNotification = payload.new as Notification;
+          setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
           
           // Show toast notification
-          const { toast } = require('@/components/ui/use-toast');
           toast({
-            title: (payload.new as Notification).title,
-            description: (payload.new as Notification).message,
+            title: newNotification.title,
+            description: newNotification.message,
           });
         }
       )

@@ -3,12 +3,37 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-export const useApplicationStatus = () => {
+export const useApplicationStatus = (applicationId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [status, setStatus] = useState<string>('pending');
+
+  // Fetch application status if applicationId is provided
+  const fetchStatus = async () => {
+    if (!applicationId) return;
+    
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('job_applications')
+        .select('status')
+        .eq('id', applicationId)
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        setStatus(data.status || 'pending');
+      }
+    } catch (error: any) {
+      console.error('Error fetching application status:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const updateApplicationStatus = async (
     applicationId: string,
-    status: string,
+    newStatus: string,
     candidateId: string
   ) => {
     try {
@@ -17,7 +42,7 @@ export const useApplicationStatus = () => {
       // Update status in database
       const { error } = await supabase
         .from('job_applications')
-        .update({ status })
+        .update({ status: newStatus })
         .eq('id', applicationId);
 
       if (error) throw error;
@@ -34,7 +59,7 @@ export const useApplicationStatus = () => {
             action: 'application_update',
             data: {
               applicationId,
-              status,
+              status: newStatus,
               candidateId,
             },
           }),
@@ -47,6 +72,11 @@ export const useApplicationStatus = () => {
         title: 'Cập nhật thành công',
         description: 'Trạng thái đơn ứng tuyển đã được cập nhật',
       });
+
+      // Update local state
+      if (applicationId === applicationId) {
+        setStatus(newStatus);
+      }
 
       return true;
     } catch (error: any) {
@@ -61,7 +91,12 @@ export const useApplicationStatus = () => {
     }
   };
 
-  return { updateApplicationStatus, isLoading };
+  // Call fetchStatus when the component mounts or applicationId changes
+  useState(() => {
+    fetchStatus();
+  });
+
+  return { updateApplicationStatus, isLoading, status };
 };
 
 export default useApplicationStatus;
