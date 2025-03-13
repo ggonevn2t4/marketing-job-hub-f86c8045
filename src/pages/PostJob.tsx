@@ -142,10 +142,21 @@ const PostJob = () => {
     try {
       setIsSubmitting(true);
       
-      // Thêm thông tin công ty vào form data
+      // Đảm bảo tất cả các trường bắt buộc đều có mặt
       const jobData = {
-        ...values,
         company_id: companyId,
+        title: values.title,
+        category_id: values.category_id,
+        location: values.location,
+        job_type: values.job_type,
+        experience_level: values.experience_level,
+        salary: values.salary,
+        description: values.description,
+        requirements: values.requirements,
+        benefits: values.benefits,
+        is_featured: values.is_featured,
+        is_hot: values.is_hot,
+        is_urgent: values.is_urgent
       };
       
       const { data, error } = await supabase
