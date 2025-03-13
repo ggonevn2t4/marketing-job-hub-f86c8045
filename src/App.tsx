@@ -12,6 +12,8 @@ import JobDetail from "./pages/JobDetail";
 import Companies from "./pages/Companies";
 import CompanyDetail from "./pages/CompanyDetail";
 import ApplicationTracker from "./pages/ApplicationTracker";
+import ApplicationDetail from "./pages/ApplicationDetail";
+import ManageApplications from "./pages/ManageApplications";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
@@ -36,6 +38,8 @@ const App = () => (
               <Route path="/companies" element={<Companies />} />
               <Route path="/companies/:id" element={<CompanyDetail />} />
               <Route path="/application-tracker" element={<ApplicationTracker />} />
+              <Route path="/application-detail/:id" element={<ApplicationDetail />} />
+              <Route path="/manage-applications" element={<ManageApplications />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/company-profile" element={<CompanyProfile />} />
