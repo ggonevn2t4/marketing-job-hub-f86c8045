@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,9 +34,9 @@ const Header = () => {
     const fetchProfile = async () => {
       if (user) {
         try {
-          let tableName = 'profiles';
+          let tableName = 'profiles' as const;
           if (role === 'employer') {
-            tableName = 'companies';
+            tableName = 'companies' as const;
           }
 
           const { data, error } = await supabase
@@ -102,6 +103,28 @@ const Header = () => {
     }
   };
 
+  // Helper function to get avatar URL from different profile types
+  const getAvatarUrl = () => {
+    if (!profileData) return '';
+    if ('avatar_url' in profileData) {
+      return profileData.avatar_url || '';
+    } else if ('logo' in profileData) {
+      return profileData.logo || '';
+    }
+    return '';
+  };
+
+  // Helper function to get name from different profile types
+  const getProfileName = () => {
+    if (!profileData) return user?.email || '';
+    if ('full_name' in profileData) {
+      return profileData.full_name || user?.email || '';
+    } else if ('name' in profileData) {
+      return profileData.name || user?.email || '';
+    }
+    return user?.email || '';
+  };
+
   return (
     <header className="bg-background sticky top-0 z-40 border-b">
       <div className="container flex h-16 items-center justify-between py-4">
@@ -117,7 +140,7 @@ const Header = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={profileData?.avatar_url || ''} alt={user?.email || ''} />
+                    <AvatarImage src={getAvatarUrl()} alt={user?.email || ''} />
                     <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -125,7 +148,7 @@ const Header = () => {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{profileData?.full_name || user.email}</p>
+                    <p className="text-sm font-medium leading-none">{getProfileName()}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>

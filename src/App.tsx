@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LazyMotion, domAnimation } from "framer-motion";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Jobs from "./pages/Jobs";
@@ -38,46 +38,46 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <LazyMotion features={domAnimation}>
-        <BrowserRouter>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/jobs" element={<Jobs />} />
-              <Route path="/jobs/:id" element={<JobDetail />} />
-              <Route path="/companies" element={<Companies />} />
-              <Route path="/companies/:id" element={<CompanyDetail />} />
-              <Route path="/application-tracker" element={<ApplicationTracker />} />
-              <Route path="/application-detail/:id" element={<ApplicationDetail />} />
-              <Route path="/manage-applications" element={<ManageApplications />} />
-              <Route path="/manage-jobs" element={<ManageJobs />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/company-profile" element={<CompanyProfile />} />
-              <Route path="/saved-jobs" element={<SavedJobs />} />
-              <Route path="/post-job" element={<PostJob />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/sitemap" element={<Sitemap />} />
-              <Route path="/zapier-integration" element={<ZapierIntegration />} />
-              <Route path="/messages" element={<Conversations />} />
-              
-              {/* Dashboard Routes */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/dashboard/candidate" element={<CandidateDashboard />} />
-              <Route path="/dashboard/employer" element={<EmployerDashboard />} />
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </LazyMotion>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <LazyMotion features={domAnimation}>
+          <BrowserRouter>
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/jobs" element={<Jobs />} />
+                <Route path="/jobs/:id" element={<JobDetail />} />
+                <Route path="/companies" element={<Companies />} />
+                <Route path="/companies/:id" element={<CompanyDetail />} />
+                <Route path="/application-tracker" element={<ApplicationTracker />} />
+                <Route path="/application-detail/:id" element={<ApplicationDetail />} />
+                <Route path="/manage-applications" element={<ManageApplications />} />
+                <Route path="/manage-jobs" element={<ManageJobs />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/company-profile" element={<CompanyProfile />} />
+                <Route path="/saved-jobs" element={<SavedJobs />} />
+                <Route path="/post-job" element={<PostJob />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/sitemap" element={<Sitemap />} />
+                <Route path="/zapier-integration" element={<ZapierIntegration />} />
+                <Route path="/messages" element={<Conversations />} />
+                
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/candidate" element={<CandidateDashboard />} />
+                <Route path="/dashboard/employer" element={<EmployerDashboard />} />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </LazyMotion>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

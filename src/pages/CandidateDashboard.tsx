@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
@@ -12,10 +12,13 @@ import {
   MessageSquare, BookmarkCheck, AlertCircle
 } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
 
 const CandidateDashboard = () => {
   const { user, userRole, isLoading: authLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
+  const [savedJobs, setSavedJobs] = useState<number>(0);
+  const [applications, setApplications] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +27,47 @@ const CandidateDashboard = () => {
       navigate('/auth');
     }
   }, [user, userRole, authLoading, navigate]);
+
+  useEffect(() => {
+    // Fetch saved jobs count
+    const fetchSavedJobs = async () => {
+      if (user) {
+        try {
+          const { count, error } = await supabase
+            .from('saved_jobs')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+          
+          if (!error && count !== null) {
+            setSavedJobs(count);
+          }
+        } catch (error) {
+          console.error('Error fetching saved jobs:', error);
+        }
+      }
+    };
+
+    // Fetch job applications count
+    const fetchApplications = async () => {
+      if (user) {
+        try {
+          const { count, error } = await supabase
+            .from('job_applications')
+            .select('*', { count: 'exact', head: true })
+            .eq('email', user.email || '');
+          
+          if (!error && count !== null) {
+            setApplications(count);
+          }
+        } catch (error) {
+          console.error('Error fetching applications:', error);
+        }
+      }
+    };
+
+    fetchSavedJobs();
+    fetchApplications();
+  }, [user]);
 
   const isLoading = authLoading || profileLoading;
 
@@ -87,7 +131,7 @@ const CandidateDashboard = () => {
               <CardDescription>Danh sách việc làm đã lưu</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{profile?.saved_jobs?.length || 0}</div>
+              <div className="text-3xl font-bold">{savedJobs}</div>
               <Button variant="outline" className="w-full mt-4" onClick={() => navigate('/saved-jobs')}>
                 <BookmarkCheck className="mr-2 h-4 w-4" />
                 Xem tin đã lưu
@@ -101,7 +145,7 @@ const CandidateDashboard = () => {
               <CardDescription>Đơn ứng tuyển đã gửi</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{profile?.applications?.length || 0}</div>
+              <div className="text-3xl font-bold">{applications}</div>
               <Button variant="outline" className="w-full mt-4" onClick={() => navigate('/application-tracker')}>
                 <FileText className="mr-2 h-4 w-4" />
                 Xem đơn ứng tuyển
