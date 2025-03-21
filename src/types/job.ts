@@ -13,6 +13,25 @@ export interface JobPosting {
   is_featured?: boolean;
 }
 
+export interface Job {
+  id: string;
+  title: string;
+  company_id: string;
+  category_id: string;
+  job_type: string;
+  experience_level: string;
+  location: string;
+  salary?: string | null;
+  description?: string | null;
+  requirements?: string | null;
+  benefits?: string | null;
+  is_featured?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  is_hot?: boolean;
+  is_urgent?: boolean;
+}
+
 export interface JobCategory {
   id: string;
   name: string;

@@ -6,9 +6,10 @@ import Footer from '@/components/layout/Footer';
 interface LayoutProps {
   children: React.ReactNode;
   hideFooter?: boolean;
+  requireAuth?: boolean;
 }
 
-const Layout = ({ children, hideFooter = false }: LayoutProps) => {
+const Layout = ({ children, hideFooter = false, requireAuth = false }: LayoutProps) => {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />

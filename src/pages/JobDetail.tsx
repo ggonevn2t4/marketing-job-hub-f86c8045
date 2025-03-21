@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -586,8 +585,7 @@ const JobDetail = () => {
             </div>
             
             <JobApplicationForm 
-              jobId={job.id} 
-              jobTitle={job.title}
+              job={{id: job.id, title: job.title}}
               onSuccess={() => {
                 showToast({
                   title: "Thành công!",

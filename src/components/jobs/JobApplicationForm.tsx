@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -67,7 +68,10 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job }) => {
     };
 
     try {
-      const { data, error } = await supabase.from('job_applications').insert([formData]).select();
+      const { data, error } = await supabase
+        .from('job_applications')
+        .insert(formData)
+        .select();
 
       if (error) {
         throw error;

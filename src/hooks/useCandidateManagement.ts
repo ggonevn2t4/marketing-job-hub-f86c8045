@@ -7,9 +7,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { CandidateProfile } from '@/types/profile';
 
 // Define a candidate interface that extends CandidateProfile with email and status
-export interface CandidateWithStatus extends CandidateProfile {
+export interface CandidateWithStatus extends Omit<CandidateProfile, 'skills' | 'experience' | 'education'> {
   email?: string;
   status?: string;
+  skills?: any[];
+  experience?: any[];
+  education?: any[];
 }
 
 export const useCandidateManagement = () => {
@@ -160,7 +163,7 @@ export const useCandidateManagement = () => {
       if (error) throw error;
       
       // Extract unique profiles from applications and add email and status
-      const uniqueProfiles = new Map<string, CandidateWithStatus>();
+      const uniqueProfiles = new Map();
       
       applications?.forEach(app => {
         if (app.profiles) {
@@ -177,7 +180,7 @@ export const useCandidateManagement = () => {
         }
       });
       
-      setAppliedCandidates(Array.from(uniqueProfiles.values()));
+      setAppliedCandidates(Array.from(uniqueProfiles.values()) as CandidateWithStatus[]);
     } catch (error) {
       console.error('Error fetching applied candidates:', error);
     }
@@ -260,7 +263,7 @@ export const useCandidateManagement = () => {
       
       // Experience filtering
       const matchesExperience = !filterExperience || 
-        (candidate.experience && candidate.experience.length >= parseInt(filterExperience));
+        (candidate.experience && candidate.experience.length >= parseInt(filterExperience || '0'));
       
       return matchesSearch && matchesSkill && matchesLocation && matchesExperience;
     });
