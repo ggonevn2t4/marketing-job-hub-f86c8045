@@ -1,7 +1,7 @@
 
 import type { User, Session } from '@supabase/supabase-js';
 
-export type UserRole = 'admin' | 'candidate' | 'employer';
+export type UserRole = 'candidate' | 'employer'; // Removed 'admin' to match the Supabase enum
 
 export interface AuthContextType {
   user: User | null;

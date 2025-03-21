@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/auth';
 import { sendZapierEvent } from './zapierService';
@@ -54,9 +55,10 @@ export const signUpUser = async (
         role: role
       });
       
+      // Fix for TypeScript error - changing from insert([{..}]) to insert({..})
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert([{ user_id: data.user.id, role: role }]);
+        .insert({ user_id: data.user.id, role: role });
 
       if (roleError) {
         console.error("Error adding user role:", roleError);
@@ -77,10 +79,10 @@ export const signUpUser = async (
       if (role === 'candidate') {
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([{ 
+          .insert({ 
             id: data.user.id, 
             full_name: fullName,
-          }]);
+          });
           
         if (profileError) {
           console.error("Error creating candidate profile:", profileError);
@@ -90,10 +92,10 @@ export const signUpUser = async (
       } else if (role === 'employer') {
         const { error: companyError } = await supabase
           .from('companies')
-          .insert([{ 
+          .insert({ 
             id: data.user.id, 
             name: fullName,
-          }]);
+          });
           
         if (companyError) {
           console.error("Error creating company profile:", companyError);
@@ -191,9 +193,10 @@ export const handleAuthCallback = async () => {
                          data.session.user.user_metadata.name || 
                          'User';
         
+        // Fix same issue with insert method here
         const { error: roleError } = await supabase
           .from('user_roles')
-          .insert([{ user_id: userId, role: role }]);
+          .insert({ user_id: userId, role: role });
 
         if (roleError) {
           console.error("Error adding user role for social login:", roleError);
@@ -203,10 +206,10 @@ export const handleAuthCallback = async () => {
         
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([{ 
+          .insert({ 
             id: userId, 
             full_name: fullName,
-          }]);
+          });
           
         if (profileError) {
           console.error("Error creating profile for social login:", profileError);
