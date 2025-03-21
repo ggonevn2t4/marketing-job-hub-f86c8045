@@ -1,3 +1,4 @@
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -63,7 +64,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       location: data.location || null,
       description: data.description || null,
       company_size: data.company_size || null,
-      founded_year: data.founded_year !== undefined ? data.founded_year : null,
+      founded_year: data.founded_year || null,
     });
   };
 
