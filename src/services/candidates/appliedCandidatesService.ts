@@ -31,10 +31,20 @@ export const fetchAppliedCandidates = async (userId: string) => {
       .select(`
         *,
         profiles:profiles(
-          *,
-          skills(*),
-          experience(*),
-          education(*)
+          id,
+          full_name,
+          avatar_url,
+          phone,
+          bio,
+          address,
+          date_of_birth,
+          resume_url,
+          portfolio_url,
+          video_intro_url,
+          created_at,
+          skills(id, name),
+          experience(id, position, company, start_date, end_date),
+          education(id, institution, degree, field_of_study, start_date, end_date)
         )
       `)
       .in('job_id', jobIds);
@@ -48,7 +58,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
       if (app.profiles) {
         const profile = app.profiles as any;
         
-        // Handle potential null or undefined arrays
+        // Default to empty arrays for collections
         const skills = Array.isArray(profile.skills) ? profile.skills : [];
         const experience = Array.isArray(profile.experience) ? profile.experience : [];
         const education = Array.isArray(profile.education) ? profile.education : [];
