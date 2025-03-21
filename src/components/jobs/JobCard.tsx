@@ -17,16 +17,24 @@ import { Card, CardContent } from '@/components/ui/card';
 export interface JobProps {
   id: string;
   title: string;
-  company_name: string;
+  company_name?: string;
+  company?: string;  // Alternative to company_name for backward compatibility
   company_logo?: string;
+  logo?: string;     // Alternative to company_logo for backward compatibility
   location: string;
-  job_type: string;
+  job_type?: string;
+  jobType?: string;  // Alternative to job_type for backward compatibility
   experience_level?: string;
+  experienceLevel?: string; // Alternative to experience_level for backward compatibility
   salary?: string;
-  created_at: string;
+  created_at?: string;
+  postedAt?: string; // Alternative to created_at for backward compatibility
   is_featured?: boolean;
+  isFeatured?: boolean; // Alternative to is_featured for backward compatibility
   is_hot?: boolean;
+  isHot?: boolean;   // Alternative to is_hot for backward compatibility
   is_urgent?: boolean;
+  isUrgent?: boolean; // Alternative to is_urgent for backward compatibility
   description?: string;
   company_id?: string;
   views?: number;
@@ -37,17 +45,35 @@ const JobCard = ({
   id, 
   title, 
   company_name, 
+  company,
   company_logo, 
+  logo,
   location, 
   job_type, 
+  jobType,
   experience_level,
+  experienceLevel,
   salary,
   created_at,
+  postedAt,
   is_featured,
+  isFeatured,
   is_hot,
+  isHot,
   is_urgent,
+  isUrgent,
   views
 }: JobProps) => {
+  // Use the alternative props if the original ones are not provided
+  const displayCompanyName = company_name || company || '';
+  const displayLogo = company_logo || logo;
+  const displayJobType = job_type || jobType || '';
+  const displayExperienceLevel = experience_level || experienceLevel;
+  const displayCreatedAt = created_at || postedAt || '';
+  const displayFeatured = is_featured || isFeatured || false;
+  const displayHot = is_hot || isHot || false;
+  const displayUrgent = is_urgent || isUrgent || false;
+
   const timeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -63,15 +89,15 @@ const JobCard = ({
   };
 
   return (
-    <Card className={`border overflow-hidden transition-all hover:border-primary/50 hover:shadow-sm ${is_featured ? 'ring-1 ring-primary/30 bg-primary/5' : ''}`}>
+    <Card className={`border overflow-hidden transition-all hover:border-primary/50 hover:shadow-sm ${displayFeatured ? 'ring-1 ring-primary/30 bg-primary/5' : ''}`}>
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-md overflow-hidden border bg-gray-100 flex-shrink-0">
-            {company_logo ? (
-              <img src={company_logo} alt={company_name} className="w-full h-full object-cover" />
+            {displayLogo ? (
+              <img src={displayLogo} alt={displayCompanyName} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium text-sm">
-                {company_name.charAt(0)}
+                {displayCompanyName.charAt(0)}
               </div>
             )}
           </div>
@@ -85,17 +111,17 @@ const JobCard = ({
               </h3>
               
               <div className="flex gap-1 flex-wrap">
-                {is_hot && (
+                {displayHot && (
                   <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-xs">
                     Hot
                   </Badge>
                 )}
-                {is_urgent && (
+                {displayUrgent && (
                   <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 text-xs">
                     Gấp
                   </Badge>
                 )}
-                {is_featured && (
+                {displayFeatured && (
                   <Badge variant="secondary" className="text-xs px-2 py-0 h-5">
                     Nổi bật
                   </Badge>
@@ -105,7 +131,7 @@ const JobCard = ({
             
             <div className="text-muted-foreground flex items-center gap-2 mb-3">
               <Building size={14} />
-              <span className="text-sm">{company_name}</span>
+              <span className="text-sm">{displayCompanyName}</span>
             </div>
             
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
@@ -116,13 +142,13 @@ const JobCard = ({
               
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Briefcase size={14} />
-                <span>{job_type}</span>
+                <span>{displayJobType}</span>
               </div>
               
-              {experience_level && (
+              {displayExperienceLevel && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Award size={14} />
-                  <span>{experience_level}</span>
+                  <span>{displayExperienceLevel}</span>
                 </div>
               )}
               
@@ -137,7 +163,7 @@ const JobCard = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Calendar size={14} />
-                <span>{timeAgo(created_at)}</span>
+                <span>{displayCreatedAt ? timeAgo(displayCreatedAt) : ''}</span>
                 
                 {views !== undefined && (
                   <div className="flex items-center gap-1 ml-3">

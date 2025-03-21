@@ -3,7 +3,6 @@ import { useState } from 'react';
 import JobCard, { JobProps } from './JobCard';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface JobListProps {
   jobs: JobProps[];
