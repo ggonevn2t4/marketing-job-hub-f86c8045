@@ -1,9 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { matchJobWithCandidates } from '@/utils/jobMatcher';
 import type { JobPosting } from '@/types/job';
 
-export const createJobPosting = async (jobData: JobPosting) => {
+export const createJobPosting = async (jobData: any) => {
   try {
     const { data, error } = await supabase
       .from('jobs')

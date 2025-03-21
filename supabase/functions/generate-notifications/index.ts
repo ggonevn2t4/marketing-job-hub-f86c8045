@@ -58,15 +58,15 @@ async function handleJobApplication(supabase: any, data: any) {
   // Get company details to find the employer user ID
   const { data: company } = await supabase
     .from("companies")
-    .select("metadata")
+    .select("user_id")
     .eq("id", job.company_id)
     .single();
   
-  if (!company || !company.metadata || !company.metadata.user_id) {
+  if (!company || !company.user_id) {
     throw new Error("Employer not found");
   }
   
-  const employerId = company.metadata.user_id;
+  const employerId = company.user_id;
   
   // Create notification for employer
   await supabase.from("notifications").insert({

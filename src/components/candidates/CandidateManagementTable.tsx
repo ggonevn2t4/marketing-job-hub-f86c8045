@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -82,6 +81,27 @@ const CandidateManagementTable = ({
           title: "Cập nhật thành công",
           description: "Trạng thái ứng viên đã được cập nhật."
         });
+        if (candidateId) {
+          try {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notifications`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({
+                action: 'application_update',
+                data: {
+                  applicationId: candidateId,
+                  status: newStatus,
+                  candidateId: candidateId,
+                },
+              }),
+            });
+          } catch (error) {
+            console.error('Error sending status update notification:', error);
+          }
+        }
       } catch (error) {
         toast({
           title: "Lỗi",
@@ -243,7 +263,7 @@ const CandidateManagementTable = ({
                       <div>
                         <div className="font-medium">{candidate.full_name}</div>
                         <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Mail className="h-3 w-3" /> {candidate.email || 'Không có email'}
+                          <Mail className="h-3 w-3" /> {candidate.email || 'N/A'}
                         </div>
                         {candidate.phone && (
                           <div className="text-sm text-muted-foreground flex items-center gap-1">

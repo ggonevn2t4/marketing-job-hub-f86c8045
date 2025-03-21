@@ -4,7 +4,7 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: string;
+  type: 'job_match' | 'job_application' | 'application_update' | string;
   read: boolean;
   created_at: string;
   related_id?: string;

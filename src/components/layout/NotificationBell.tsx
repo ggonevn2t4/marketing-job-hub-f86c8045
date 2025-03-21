@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -9,18 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
-
-export type Notification = {
-  id: string;
-  user_id: string;
-  title: string;
-  message: string;
-  type: 'job_match' | 'job_application' | 'application_update';
-  read: boolean;
-  created_at: string;
-  related_id?: string;
-};
+import { Notification } from '@/types/notification';
+import { toast } from '@/hooks/use-toast';
 
 export const useNotifications = () => {
   const { user } = useAuth();
@@ -72,7 +63,7 @@ export const useNotifications = () => {
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
+          setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
           setUnreadCount(prev => prev + 1);
           
           // Show toast notification
@@ -133,6 +124,7 @@ const NotificationBell = () => {
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -180,6 +172,17 @@ const NotificationBell = () => {
                     if (!notification.read) {
                       markAsRead(notification.id);
                     }
+                    
+                    if (notification.related_id) {
+                      if (notification.type === 'job_match') {
+                        navigate(`/jobs/${notification.related_id}`);
+                      } else if (notification.type === 'job_application') {
+                        navigate(`/manage-applications`);
+                      } else if (notification.type === 'application_update') {
+                        navigate(`/application-detail/${notification.related_id}`);
+                      }
+                    }
+                    
                     setOpen(false);
                   }}
                 >
@@ -198,6 +201,19 @@ const NotificationBell = () => {
             </div>
           )}
         </ScrollArea>
+        <div className="p-2 border-t">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full text-xs"
+            onClick={() => {
+              navigate('/notifications');
+              setOpen(false);
+            }}
+          >
+            Xem tất cả thông báo
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
