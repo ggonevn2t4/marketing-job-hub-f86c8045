@@ -27,27 +27,41 @@ export const fetchAppliedCandidates = async (userId: string) => {
     
     const jobIds = jobs.map(job => job.id);
     
-    // Get applications for these jobs - replacing the problematic query
+    // Get applications for these jobs - using simpler query to avoid type depth issues
     const { data: applications, error } = await supabase
       .from('job_applications')
-      .select(`
-        id, email, status, job_id,
-        profiles:profiles(
-          id, full_name, avatar_url, phone, bio, address, date_of_birth, 
-          resume_url, portfolio_url, video_intro_url, created_at
-        )
-      `)
+      .select('id, email, status, job_id, profile_id:profiles(id)')
       .in('job_id', jobIds);
     
     if (error) throw error;
+    if (!applications || applications.length === 0) return [];
     
-    // Fetch skills, experience, and education separately to avoid deep nesting
+    // Get profile IDs from applications
+    const profileIds = applications
+      .map(app => app.profile_id?.id)
+      .filter(Boolean) as string[];
+    
+    if (profileIds.length === 0) return [];
+    
+    // Fetch profiles separately with a simpler query
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', profileIds);
+    
+    if (profilesError) throw profilesError;
+    if (!profiles) return [];
+    
+    // Construct candidates array with profile data
     const candidates: CandidateWithStatus[] = [];
     
-    for (const app of applications || []) {
-      if (!app.profiles) continue;
+    for (const profile of profiles) {
+      // Find the corresponding application
+      const application = applications.find(
+        app => app.profile_id?.id === profile.id
+      );
       
-      const profile = app.profiles as any;
+      if (!application) continue;
       
       // Fetch skills for this profile
       const { data: skills } = await supabase
@@ -68,7 +82,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
         .eq('user_id', profile.id);
       
       // Create the candidate object with all data
-      const enrichedProfile: CandidateWithStatus = {
+      const candidate: CandidateWithStatus = {
         id: profile.id,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
@@ -80,18 +94,14 @@ export const fetchAppliedCandidates = async (userId: string) => {
         portfolio_url: profile.portfolio_url,
         video_intro_url: profile.video_intro_url,
         created_at: profile.created_at,
-        email: app.email || `${profile.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-        status: app.status || 'pending',
+        email: application.email || `${profile.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+        status: application.status || 'pending',
         skills: skills || [],
         experience: experience || [],
         education: education || []
       };
       
-      // Check if we already have this candidate
-      const existingIndex = candidates.findIndex(c => c.id === profile.id);
-      if (existingIndex === -1) {
-        candidates.push(enrichedProfile);
-      }
+      candidates.push(candidate);
     }
     
     return candidates;
