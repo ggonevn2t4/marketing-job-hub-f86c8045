@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -37,10 +38,10 @@ import {
   UserX 
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { CandidateProfile } from '@/types/profile';
+import { CandidateWithStatus } from '@/hooks/useCandidateManagement';
 
 interface CandidateManagementTableProps {
-  candidates: CandidateProfile[];
+  candidates: CandidateWithStatus[];
   isLoading: boolean;
   onUpdateStatus?: (id: string, status: string) => Promise<void>;
   filterBy?: 'all' | 'saved' | 'applied'; // Filter by type of candidate
@@ -81,27 +82,6 @@ const CandidateManagementTable = ({
           title: "Cập nhật thành công",
           description: "Trạng thái ứng viên đã được cập nhật."
         });
-        if (candidateId) {
-          try {
-            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notifications`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              },
-              body: JSON.stringify({
-                action: 'application_update',
-                data: {
-                  applicationId: candidateId,
-                  status: newStatus,
-                  candidateId: candidateId,
-                },
-              }),
-            });
-          } catch (error) {
-            console.error('Error sending status update notification:', error);
-          }
-        }
       } catch (error) {
         toast({
           title: "Lỗi",
@@ -120,14 +100,14 @@ const CandidateManagementTable = ({
     });
   };
 
-  const getLatestPosition = (candidate: CandidateProfile) => {
+  const getLatestPosition = (candidate: CandidateWithStatus) => {
     if (!candidate.experience || candidate.experience.length === 0) {
       return 'Chưa có kinh nghiệm';
     }
     return candidate.experience[0].position || 'N/A';
   };
 
-  const getSkillsList = (candidate: CandidateProfile) => {
+  const getSkillsList = (candidate: CandidateWithStatus) => {
     if (!candidate.skills || candidate.skills.length === 0) {
       return 'Chưa có kỹ năng';
     }

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { matchJobWithCandidates } from '@/utils/jobMatcher';
 import type { JobPosting } from '@/types/job';
