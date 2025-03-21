@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +15,8 @@ import Layout from '@/components/layout/Layout';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { resetPassword } from '@/services/authService';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Email không hợp lệ' }),
@@ -27,8 +30,13 @@ const registerSchema = z.object({
   role: z.enum(['candidate', 'employer'], { required_error: 'Vui lòng chọn loại tài khoản' }),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: 'Email không hợp lệ' }),
+});
+
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 const Auth = () => {
   const { signIn, signUp, signInWithSocial, isLoading, user } = useAuth();
@@ -36,6 +44,8 @@ const Auth = () => {
   const { toast } = useToast();
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetRequestSent, setResetRequestSent] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,6 +72,13 @@ const Auth = () => {
     },
   });
 
+  const forgotPasswordForm = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    }
+  });
+
   const onLoginSubmit = async (values: LoginFormValues) => {
     setLoginError(null);
     try {
@@ -77,6 +94,24 @@ const Auth = () => {
       await signUp(values.email, values.password, values.fullName, values.role);
     } catch (error: any) {
       console.error('Registration error details:', error);
+    }
+  };
+
+  const onForgotPasswordSubmit = async (values: ForgotPasswordFormValues) => {
+    try {
+      await resetPassword(values.email);
+      setResetRequestSent(true);
+      toast({
+        title: "Yêu cầu đặt lại mật khẩu đã được gửi",
+        description: "Vui lòng kiểm tra email của bạn để tiếp tục quy trình đặt lại mật khẩu.",
+      });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi đặt lại mật khẩu",
+        description: error.message || "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu.",
+      });
     }
   };
 
@@ -149,6 +184,15 @@ const Auth = () => {
                       ) : (
                         'Đăng nhập'
                       )}
+                    </Button>
+
+                    <Button 
+                      type="button" 
+                      variant="link" 
+                      className="w-full p-0 h-auto font-normal text-sm"
+                      onClick={() => setForgotPasswordOpen(true)}
+                    >
+                      Quên mật khẩu?
                     </Button>
                   </form>
                 </Form>
@@ -350,6 +394,60 @@ const Auth = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Forgot Password Dialog */}
+        <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Quên mật khẩu</DialogTitle>
+              <DialogDescription>
+                Nhập email của bạn và chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {resetRequestSent ? (
+              <div className="py-6 text-center">
+                <p className="mb-4">Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn.</p>
+                <p className="text-sm text-muted-foreground">Vui lòng kiểm tra hộp thư đến và thư rác.</p>
+              </div>
+            ) : (
+              <Form {...forgotPasswordForm}>
+                <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+                  <FormField
+                    control={forgotPasswordForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="you@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        'Gửi hướng dẫn đặt lại'
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

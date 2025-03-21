@@ -32,6 +32,7 @@ import Conversations from "./pages/Conversations";
 import Dashboard from "./pages/Dashboard";
 import CandidateDashboard from "./pages/CandidateDashboard";
 import EmployerDashboard from "./pages/EmployerDashboard";
+import ResetPassword from '@/pages/ResetPassword';
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ function App() {
                   <Route path="/sitemap" element={<Sitemap />} />
                   <Route path="/zapier-integration" element={<ZapierIntegration />} />
                   <Route path="/messages" element={<Conversations />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/dashboard/candidate" element={<CandidateDashboard />} />
