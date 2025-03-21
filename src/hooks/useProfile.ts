@@ -419,6 +419,68 @@ export const useProfile = () => {
     }
   };
 
+  const handleUpdatePortfolio = async (data: { portfolio_url: string | null }) => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      await updateCandidateBasicInfo(user.id, { portfolio_url: data.portfolio_url });
+      
+      // Cập nhật state
+      setProfile(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          portfolio_url: data.portfolio_url
+        };
+      });
+      
+      toast({
+        title: 'Cập nhật thành công',
+        description: 'Thông tin portfolio đã được cập nhật',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Lỗi khi cập nhật',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateVideoIntro = async (data: { video_intro_url: string | null }) => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      await updateCandidateBasicInfo(user.id, { video_intro_url: data.video_intro_url });
+      
+      // Cập nhật state
+      setProfile(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          video_intro_url: data.video_intro_url
+        };
+      });
+      
+      toast({
+        title: 'Cập nhật thành công',
+        description: 'Video giới thiệu đã được cập nhật',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Lỗi khi cập nhật',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     profile,
     isLoading,
@@ -433,6 +495,8 @@ export const useProfile = () => {
     handleUpdateSkill,
     handleDeleteSkill,
     handleUploadResume,
-    handleDeleteResume
+    handleDeleteResume,
+    handleUpdatePortfolio,
+    handleUpdateVideoIntro
   };
 };

@@ -6,9 +6,12 @@ import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import CompanyProfileForm from '@/components/profile/CompanyProfileForm';
+import CompanySocialForm from '@/components/profile/CompanySocialForm';
+import CompanyGalleryForm from '@/components/profile/CompanyGalleryForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Building2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Building2, Share2, ImageIcon } from 'lucide-react';
 
 const CompanyProfile = () => {
   const { user, userRole, isLoading: authLoading } = useAuth();
@@ -20,6 +23,7 @@ const CompanyProfile = () => {
     updateProfile
   } = useCompanyProfile(companyId);
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('basic');
 
   useEffect(() => {
     // Kiểm tra nếu người dùng không đăng nhập, chuyển hướng đến trang đăng nhập
@@ -117,13 +121,45 @@ const CompanyProfile = () => {
         
         <Separator className="mb-6" />
         
-        <div className="space-y-8">
-          <CompanyProfileForm 
-            profile={profile} 
-            isLoading={isLoading} 
-            onSubmit={updateProfile} 
-          />
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-3 gap-2">
+            <TabsTrigger value="basic" className="flex items-center space-x-2">
+              <Building2 className="h-4 w-4" />
+              <span className="hidden md:inline">Thông tin cơ bản</span>
+            </TabsTrigger>
+            <TabsTrigger value="social" className="flex items-center space-x-2">
+              <Share2 className="h-4 w-4" />
+              <span className="hidden md:inline">Mạng xã hội</span>
+            </TabsTrigger>
+            <TabsTrigger value="gallery" className="flex items-center space-x-2">
+              <ImageIcon className="h-4 w-4" />
+              <span className="hidden md:inline">Thư viện ảnh</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="basic" className="pt-4">
+            <CompanyProfileForm 
+              profile={profile} 
+              isLoading={isLoading} 
+              onSubmit={updateProfile} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="social" className="pt-4">
+            <CompanySocialForm 
+              profile={profile} 
+              isLoading={isLoading} 
+              onSubmit={updateProfile} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="gallery" className="pt-4">
+            <CompanyGalleryForm 
+              companyId={companyId || ''} 
+              isLoading={isLoading} 
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

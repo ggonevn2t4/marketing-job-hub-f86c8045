@@ -38,6 +38,8 @@ export interface CandidateProfile {
   address: string | null;
   date_of_birth: string | null;
   resume_url: string | null;
+  portfolio_url: string | null;
+  video_intro_url: string | null;
   created_at: string;
   education: Education[];
   experience: Experience[];
@@ -52,4 +54,11 @@ export interface CompanyProfile {
   industry: string | null;
   location: string | null;
   description: string | null;
+  company_size?: string | null;
+  founded_year?: number | null;
+  social_media?: {
+    linkedin?: string;
+    twitter?: string;
+    facebook?: string;
+  } | null;
 }

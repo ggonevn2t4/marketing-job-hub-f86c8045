@@ -9,10 +9,12 @@ import EducationForm from '@/components/profile/EducationForm';
 import ExperienceForm from '@/components/profile/ExperienceForm';
 import SkillsForm from '@/components/profile/SkillsForm';
 import ResumeUpload from '@/components/profile/ResumeUpload';
+import PortfolioForm from '@/components/profile/PortfolioForm';
+import VideoIntroForm from '@/components/profile/VideoIntroForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, GraduationCap, Briefcase, FileText, Settings } from 'lucide-react';
+import { User, GraduationCap, Briefcase, FileText, Settings, Link2, Video } from 'lucide-react';
 
 const Profile = () => {
   const { user, userRole, isLoading: authLoading } = useAuth();
@@ -30,7 +32,9 @@ const Profile = () => {
     handleUpdateSkill,
     handleDeleteSkill,
     handleUploadResume,
-    handleDeleteResume
+    handleDeleteResume,
+    handleUpdatePortfolio,
+    handleUpdateVideoIntro
   } = useProfile();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('basic');
@@ -89,7 +93,7 @@ const Profile = () => {
         <Separator className="mb-6" />
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <TabsList className="grid grid-cols-2 md:grid-cols-7 gap-2">
             <TabsTrigger value="basic" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span className="hidden md:inline">Thông tin cơ bản</span>
@@ -105,6 +109,14 @@ const Profile = () => {
             <TabsTrigger value="skills" className="flex items-center space-x-2">
               <Settings className="h-4 w-4" />
               <span className="hidden md:inline">Kỹ năng</span>
+            </TabsTrigger>
+            <TabsTrigger value="portfolio" className="flex items-center space-x-2">
+              <Link2 className="h-4 w-4" />
+              <span className="hidden md:inline">Portfolio</span>
+            </TabsTrigger>
+            <TabsTrigger value="video" className="flex items-center space-x-2">
+              <Video className="h-4 w-4" />
+              <span className="hidden md:inline">Video giới thiệu</span>
             </TabsTrigger>
             <TabsTrigger value="resume" className="flex items-center space-x-2">
               <FileText className="h-4 w-4" />
@@ -147,6 +159,22 @@ const Profile = () => {
               onAdd={handleAddSkill}
               onUpdate={handleUpdateSkill}
               onDelete={handleDeleteSkill}
+            />
+          </TabsContent>
+          
+          <TabsContent value="portfolio" className="pt-4">
+            <PortfolioForm
+              portfolioUrl={profile?.portfolio_url}
+              isLoading={isLoading}
+              onUpdate={handleUpdatePortfolio}
+            />
+          </TabsContent>
+          
+          <TabsContent value="video" className="pt-4">
+            <VideoIntroForm
+              videoUrl={profile?.video_intro_url}
+              isLoading={isLoading}
+              onUpdate={handleUpdateVideoIntro}
             />
           </TabsContent>
           

@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CompanyProfile } from '@/types/profile';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building, Calendar, Users } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Tên công ty phải có ít nhất 2 ký tự' }),
@@ -17,6 +18,13 @@ const formSchema = z.object({
   industry: z.string().optional(),
   location: z.string().optional(),
   description: z.string().optional(),
+  company_size: z.string().optional(),
+  founded_year: z.string()
+    .refine(val => !val || !isNaN(parseInt(val)), {
+      message: 'Năm thành lập phải là số'
+    })
+    .transform(val => val ? parseInt(val) : undefined)
+    .optional(),
 });
 
 type CompanyProfileFormProps = {
@@ -24,6 +32,15 @@ type CompanyProfileFormProps = {
   isLoading: boolean;
   onSubmit: (data: Partial<CompanyProfile>) => void;
 };
+
+const companySizeOptions = [
+  { value: '1-10', label: '1-10 nhân viên' },
+  { value: '11-50', label: '11-50 nhân viên' },
+  { value: '51-200', label: '51-200 nhân viên' },
+  { value: '201-500', label: '201-500 nhân viên' },
+  { value: '501-1000', label: '501-1000 nhân viên' },
+  { value: '1001+', label: 'Hơn 1000 nhân viên' },
+];
 
 const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
@@ -34,8 +51,22 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       industry: profile?.industry || '',
       location: profile?.location || '',
       description: profile?.description || '',
+      company_size: profile?.company_size || '',
+      founded_year: profile?.founded_year ? profile.founded_year.toString() : '',
     },
   });
+
+  const handleSubmit = (data: z.infer<typeof formSchema>) => {
+    onSubmit({
+      name: data.name,
+      website: data.website || null,
+      industry: data.industry || null,
+      location: data.location || null,
+      description: data.description || null,
+      company_size: data.company_size || null,
+      founded_year: data.founded_year,
+    });
+  };
 
   return (
     <Card>
@@ -55,7 +86,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -70,33 +101,35 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="website"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="industry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ngành nghề</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ví dụ: Công nghệ thông tin, Tài chính..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="industry"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ngành nghề</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ví dụ: Công nghệ thông tin, Tài chính..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <FormField
               control={form.control}
@@ -112,6 +145,62 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
               )}
             />
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="company_size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                      Quy mô công ty
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn quy mô công ty" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {companySizeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="founded_year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                      Năm thành lập
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Ví dụ: 2010" 
+                        min="1900" 
+                        max={new Date().getFullYear()}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             <FormField
               control={form.control}
               name="description"
@@ -120,7 +209,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
                   <FormLabel>Giới thiệu về công ty</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Mô tả về công ty, lĩnh vực hoạt động..." 
+                      placeholder="Mô tả về công ty, lĩnh vực hoạt động, văn hóa..." 
                       className="resize-none" 
                       rows={4}
                       {...field} 
