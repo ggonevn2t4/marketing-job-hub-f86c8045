@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +34,8 @@ import Dashboard from "./pages/Dashboard";
 import CandidateDashboard from "./pages/CandidateDashboard";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import ResetPassword from '@/pages/ResetPassword';
+import CandidateManagement from './pages/CandidateManagement';
+import FindCandidates from './pages/FindCandidates';
 
 const queryClient = new QueryClient();
 
@@ -74,6 +77,10 @@ function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/dashboard/candidate" element={<CandidateDashboard />} />
                   <Route path="/dashboard/employer" element={<EmployerDashboard />} />
+                  
+                  {/* Newly added routes */}
+                  <Route path="/candidate-management" element={<CandidateManagement />} />
+                  <Route path="/find-candidates" element={<FindCandidates />} />
                   
                   <Route path="*" element={<NotFound />} />
                 </Routes>
