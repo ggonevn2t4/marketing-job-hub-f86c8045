@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, Briefcase } from 'lucide-react';
+import { Search, MapPin, Briefcase, SlidersHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 const SearchBar = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const SearchBar = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const isMobile = useIsMobile();
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Get query params from URL if on search page
   useEffect(() => {
@@ -77,6 +79,12 @@ const SearchBar = () => {
     { value: 'Đồng Nai', label: 'Đồng Nai' },
   ];
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setLocationValue('');
+    setCategory('');
+  };
+
   return (
     <form onSubmit={handleSearch} className="w-full">
       <div className="bg-card rounded-xl shadow-md p-3 flex flex-col md:flex-row gap-3">
@@ -129,8 +137,58 @@ const SearchBar = () => {
           )}
         </div>
 
-        <Button type="submit" className="py-6 px-8">Tìm kiếm</Button>
+        <div className="flex gap-2">
+          {(searchTerm || locationValue || category) && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="py-6" 
+              onClick={clearFilters}
+            >
+              Xóa
+            </Button>
+          )}
+          <Button type="submit" className="py-6 px-8">Tìm kiếm</Button>
+        </div>
       </div>
+
+      {(searchTerm || locationValue || category) && (
+        <div className="flex flex-wrap gap-2 mt-4">
+          {searchTerm && (
+            <Badge variant="secondary" className="text-sm py-1.5">
+              Từ khóa: {searchTerm}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => setSearchTerm('')}
+              >
+                ✕
+              </button>
+            </Badge>
+          )}
+          {locationValue && locationValue !== 'all' && (
+            <Badge variant="secondary" className="text-sm py-1.5">
+              Địa điểm: {locationValue}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => setLocationValue('')}
+              >
+                ✕
+              </button>
+            </Badge>
+          )}
+          {category && category !== 'all' && (
+            <Badge variant="secondary" className="text-sm py-1.5">
+              Chuyên ngành: {categories.find(c => c.id === category)?.name || category}
+              <button 
+                className="ml-2 hover:text-destructive"
+                onClick={() => setCategory('')}
+              >
+                ✕
+              </button>
+            </Badge>
+          )}
+        </div>
+      )}
     </form>
   );
 };

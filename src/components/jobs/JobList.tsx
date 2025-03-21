@@ -27,6 +27,9 @@ const JobList = ({
   
   const hasMore = visibleItems < jobs.length;
   
+  // If not using load more (pagination is handled outside), show all items
+  const itemsToShow = showLoadMore ? jobs.slice(0, visibleItems) : jobs;
+  
   return (
     <div className="space-y-8">
       {(title || description) && (
@@ -37,7 +40,7 @@ const JobList = ({
       )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {jobs.slice(0, visibleItems).map(job => (
+        {itemsToShow.map(job => (
           <JobCard key={job.id} {...job} />
         ))}
       </div>

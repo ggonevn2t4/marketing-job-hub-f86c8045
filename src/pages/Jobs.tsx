@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,8 +11,16 @@ import { JobProps } from '@/components/jobs/JobCard';
 import { useAuth } from '@/contexts/AuthContext';
 import useBookmarkJob from '@/hooks/useBookmarkJob';
 import { Button } from '@/components/ui/button';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import { fetchCategories } from '@/utils/supabaseQueries';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 const Jobs = () => {
   const { user } = useAuth();
@@ -22,6 +31,9 @@ const Jobs = () => {
   const [showFilters, setShowFilters] = useState(false);
   const { fetchSavedJobs } = useBookmarkJob();
   const [categories, setCategories] = useState<any[]>([]);
+  const [sortBy, setSortBy] = useState('recent');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Parse search parameters
   const keyword = searchParams.get('q') || '';
@@ -33,6 +45,18 @@ const Jobs = () => {
   const salaryRangeParam = searchParams.get('salaryRange');
   const salaryRange = salaryRangeParam ? JSON.parse(salaryRangeParam) as [number, number] : undefined;
   const featuredOnly = searchParams.get('featuredOnly') === 'true';
+  const pageParam = searchParams.get('page');
+  const sortParam = searchParams.get('sort') || 'recent';
+  
+  // Set current page and sort from URL params
+  useEffect(() => {
+    if (pageParam) {
+      setCurrentPage(parseInt(pageParam));
+    }
+    if (sortParam) {
+      setSortBy(sortParam);
+    }
+  }, [pageParam, sortParam]);
   
   const filters = {
     jobType: jobType || undefined,
@@ -81,12 +105,13 @@ const Jobs = () => {
             is_hot,
             is_urgent,
             created_at,
+            description,
             company:company_id (id, name, logo)
           `, { count: 'exact' });
         
         // Add filters based on search parameters
         if (keyword) {
-          query = query.ilike('title', `%${keyword}%`);
+          query = query.or(`title.ilike.%${keyword}%,description.ilike.%${keyword}%`);
         }
         
         if (location && location !== 'all') {
@@ -112,7 +137,6 @@ const Jobs = () => {
           const maxSalary = `${salaryRange[1]} triệu`;
           
           // Tìm các công việc có mức lương trong khoảng chỉ định
-          // Đây là logic đơn giản, thực tế bạn cần xử lý phức tạp hơn để so sánh mức lương
           query = query.or(`salary.ilike.%${minSalary}%,salary.ilike.%${maxSalary}%`);
         } else if (salary) {
           query = query.ilike('salary', `%${salary}%`);
@@ -122,9 +146,34 @@ const Jobs = () => {
           query = query.eq('is_featured', true);
         }
         
-        // Order by created_at and is_featured
-        query = query.order('is_featured', { ascending: false })
-                     .order('created_at', { ascending: false });
+        // Calculate pagination
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        
+        // Apply sorting
+        switch (sortBy) {
+          case 'featured':
+            query = query.order('is_featured', { ascending: false })
+                         .order('created_at', { ascending: false });
+            break;
+          case 'relevant':
+            // For relevance sorting, we prioritize keyword matches in title
+            if (keyword) {
+              // Custom relevance is handled after fetching data
+              query = query.order('is_featured', { ascending: false });
+            } else {
+              query = query.order('is_featured', { ascending: false })
+                          .order('created_at', { ascending: false });
+            }
+            break;
+          case 'recent':
+          default:
+            query = query.order('created_at', { ascending: false });
+            break;
+        }
+        
+        // Apply pagination
+        query = query.range(from, to);
         
         const { data, count, error } = await query;
         
@@ -132,7 +181,7 @@ const Jobs = () => {
         
         if (data) {
           // Format data for JobList component
-          const formattedJobs = data.map(job => ({
+          let formattedJobs = data.map(job => ({
             id: job.id,
             title: job.title,
             company: job.company.name,
@@ -146,6 +195,30 @@ const Jobs = () => {
             isHot: job.is_hot,
             isUrgent: job.is_urgent
           }));
+          
+          // Additional relevance sorting if keyword is present and sort is by relevant
+          if (keyword && sortBy === 'relevant') {
+            formattedJobs = formattedJobs.sort((a, b) => {
+              // Check if title contains keyword (case insensitive)
+              const aTitle = a.title.toLowerCase();
+              const bTitle = b.title.toLowerCase();
+              const keywordLower = keyword.toLowerCase();
+              
+              // If one title contains the keyword and the other doesn't
+              if (aTitle.includes(keywordLower) && !bTitle.includes(keywordLower)) return -1;
+              if (!aTitle.includes(keywordLower) && bTitle.includes(keywordLower)) return 1;
+              
+              // If one title starts with the keyword
+              if (aTitle.startsWith(keywordLower) && !bTitle.startsWith(keywordLower)) return -1;
+              if (!aTitle.startsWith(keywordLower) && bTitle.startsWith(keywordLower)) return 1;
+              
+              // Featured jobs get priority when other factors are equal
+              if (a.isFeatured && !b.isFeatured) return -1;
+              if (!a.isFeatured && b.isFeatured) return 1;
+              
+              return 0;
+            });
+          }
           
           setJobs(formattedJobs);
           setTotalJobs(count || 0);
@@ -163,7 +236,7 @@ const Jobs = () => {
     };
     
     fetchJobs();
-  }, [keyword, location, category, jobType, experienceLevel, salary, salaryRange, featuredOnly]);
+  }, [keyword, location, category, jobType, experienceLevel, salary, salaryRange, featuredOnly, currentPage, sortBy]);
   
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -203,6 +276,10 @@ const Jobs = () => {
       }
     });
     
+    // Reset to page 1 when filters change
+    updatedParams.set('page', '1');
+    setCurrentPage(1);
+    
     setSearchParams(updatedParams);
   };
   
@@ -211,8 +288,30 @@ const Jobs = () => {
     if (keyword) basicParams.set('q', keyword);
     if (location && location !== 'all') basicParams.set('location', location);
     if (category && category !== 'all') basicParams.set('category', category);
+    basicParams.set('page', '1');
+    basicParams.set('sort', sortBy);
     
+    setCurrentPage(1);
     setSearchParams(basicParams);
+  };
+  
+  const handleSortChange = (newSortBy: string) => {
+    const updatedParams = new URLSearchParams(searchParams);
+    updatedParams.set('sort', newSortBy);
+    setSortBy(newSortBy);
+    setSearchParams(updatedParams);
+  };
+  
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    
+    const updatedParams = new URLSearchParams(searchParams);
+    updatedParams.set('page', page.toString());
+    setCurrentPage(page);
+    setSearchParams(updatedParams);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   // Create title based on search parameters
@@ -227,6 +326,9 @@ const Jobs = () => {
   if (keyword) {
     title = `Kết quả tìm kiếm cho "${keyword}"`;
   }
+  
+  // Calculate total pages for pagination
+  const totalPages = Math.ceil(totalJobs / itemsPerPage);
   
   return (
     <Layout>
@@ -270,12 +372,83 @@ const Jobs = () => {
           </p>
         </div>
         
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm text-muted-foreground">
+            Hiển thị {jobs.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalJobs)} / {totalJobs} kết quả
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm mr-2">Sắp xếp theo:</span>
+            <Select value={sortBy} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sắp xếp theo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Mới nhất</SelectItem>
+                <SelectItem value="relevant">Phù hợp nhất</SelectItem>
+                <SelectItem value="featured">Nổi bật</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         ) : jobs.length > 0 ? (
-          <JobList jobs={jobs} showLoadMore={true} initialItems={10} />
+          <>
+            <JobList jobs={jobs} showLoadMore={false} initialItems={itemsPerPage} />
+            
+            {totalPages > 1 && (
+              <Pagination className="mt-8">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    // Display pages around current page
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      // If 5 or fewer pages, show all
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      // Near start
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      // Near end
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      // In middle
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <PaginationItem key={i}>
+                        <PaginationLink 
+                          isActive={pageNum === currentPage}
+                          onClick={() => handlePageChange(pageNum)}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </>
         ) : (
           <div className="text-center py-16 bg-muted/30 rounded-lg">
             <h3 className="text-lg font-medium mb-2">Không tìm thấy việc làm phù hợp</h3>

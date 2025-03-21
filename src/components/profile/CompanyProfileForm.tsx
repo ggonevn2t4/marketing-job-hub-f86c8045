@@ -36,7 +36,9 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       location: data.location || null,
       description: data.description || null,
       company_size: data.company_size || null,
-      founded_year: data.founded_year || null,
+      // Zod transforms founded_year from string to number (or undefined)
+      // We need to handle this correctly to fix the TypeScript error
+      founded_year: typeof data.founded_year === 'number' ? data.founded_year : null,
     });
   };
 
