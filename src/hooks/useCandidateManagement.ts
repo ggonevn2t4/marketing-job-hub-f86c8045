@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -31,7 +30,6 @@ export const useCandidateManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // If user is not employer, redirect to home
     if (userRole !== 'employer' && !isLoading) {
       navigate('/');
       return;
@@ -87,7 +85,6 @@ export const useCandidateManagement = () => {
     try {
       await updateCandidateStatusService(candidateId, status);
       
-      // Update the local state for all three candidate lists
       const updateCandidateInList = (list: CandidateWithStatus[]) => 
         list.map(candidate => 
           candidate.id === candidateId 
