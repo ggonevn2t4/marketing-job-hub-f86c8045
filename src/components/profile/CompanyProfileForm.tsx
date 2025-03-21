@@ -36,8 +36,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       location: data.location || null,
       description: data.description || null,
       company_size: data.company_size || null,
-      // founded_year will be a number or undefined (from Zod transformation)
-      founded_year: data.founded_year ?? null,
+      founded_year: data.founded_year || null,
     });
   };
 
