@@ -1,11 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { UserRole } from '@/types/auth';
-import { fetchUserRole, signUpUser, signInUser, signOutUser } from '@/services/authService';
+import { 
+  fetchUserRole, 
+  signUpUser, 
+  signInUser, 
+  signOutUser, 
+  signInWithGoogle,
+  handleAuthCallback 
+} from '@/services/authService';
 
 export const useAuthProvider = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -28,13 +34,11 @@ export const useAuthProvider = () => {
       setIsLoading(false);
     };
 
-    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setupUser(session);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         console.log("Auth state changed:", _event, session?.user?.id);
@@ -56,16 +60,13 @@ export const useAuthProvider = () => {
       const result = await signUpUser(email, password, fullName, role);
       console.log("Sign up result:", result);
       
-      // Kiểm tra lại session sau khi đăng ký để đảm bảo đăng ký thành công và đủ thông tin
       const { data: sessionData } = await supabase.auth.getSession();
       const session = sessionData.session;
       
       if (session?.user) {
-        // Kiểm tra xem vai trò có được tạo thành công không
         const userRole = await fetchUserRole(session.user.id);
         
         if (!userRole) {
-          // Nếu không có vai trò, đăng xuất và thông báo lỗi
           await supabase.auth.signOut();
           setUser(null);
           setUserRole(null);
@@ -84,26 +85,23 @@ export const useAuthProvider = () => {
         
         navigate('/');
       } else {
-        // Nếu không có session, hiển thị thông báo về xác nhận email
         toast({
           title: "Xác nhận email",
           description: "Vui lòng kiểm tra email để xác nhận tài khoản.",
         });
-        navigate('/auth'); // Redirect to login page
+        navigate('/auth');
       }
       
       return result;
     } catch (error: any) {
       console.error("Error during sign up:", error);
       
-      // Đảm bảo đăng xuất nếu có lỗi
       await supabase.auth.signOut();
       setUser(null);
       setUserRole(null);
       
       let errorMessage = "Đăng ký thất bại. Vui lòng thử lại.";
       
-      // Handle specific error types
       if (error.message.includes("unique constraint")) {
         errorMessage = "Email này đã được sử dụng, vui lòng sử dụng email khác.";
       } else if (error.message.includes("password")) {
@@ -149,7 +147,6 @@ export const useAuthProvider = () => {
       
       let errorMessage = "Đăng nhập thất bại. Vui lòng kiểm tra email và mật khẩu.";
       
-      // Handle specific error types
       if (error.message.includes("Invalid login credentials")) {
         errorMessage = "Email hoặc mật khẩu không chính xác.";
       } else if (error.message.includes("Email not confirmed")) {
@@ -163,6 +160,68 @@ export const useAuthProvider = () => {
       });
       
       throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signInWithSocial = async (provider: 'google') => {
+    try {
+      setIsLoading(true);
+      console.log(`Starting sign in with ${provider}`);
+      
+      if (provider === 'google') {
+        await signInWithGoogle();
+      }
+      
+    } catch (error: any) {
+      console.error(`Error during ${provider} sign in:`, error);
+      
+      toast({
+        title: "Đăng nhập thất bại",
+        description: error.message || `Không thể đăng nhập với ${provider}. Vui lòng thử lại.`,
+        variant: "destructive",
+      });
+      
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const processAuthCallback = async () => {
+    try {
+      setIsLoading(true);
+      console.log("Processing auth callback");
+      
+      const result = await handleAuthCallback();
+      
+      if (result.session) {
+        toast({
+          title: "Đăng nhập thành công!",
+          description: "Chào mừng bạn quay trở lại.",
+        });
+        
+        navigate('/');
+      } else {
+        toast({
+          title: "Đăng nhập thất bại",
+          description: "Không thể xác thực. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+        
+        navigate('/auth');
+      }
+    } catch (error: any) {
+      console.error("Error processing auth callback:", error);
+      
+      toast({
+        title: "Đăng nhập thất bại",
+        description: error.message || "Có lỗi xảy ra khi xác thực. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+      
+      navigate('/auth');
     } finally {
       setIsLoading(false);
     }
@@ -206,6 +265,8 @@ export const useAuthProvider = () => {
     isLoading,
     signUp,
     signIn,
+    signInWithSocial,
+    processAuthCallback,
     signOut,
     logout,
   };

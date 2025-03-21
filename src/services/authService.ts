@@ -5,7 +5,6 @@ import { sendZapierEvent } from './zapierService';
 export const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
     console.log("Fetching role for user:", userId);
-    // Use raw query to get user role
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -34,7 +33,6 @@ export const signUpUser = async (
   try {
     console.log("Starting signup process for:", email, fullName, role);
     
-    // First create the user in auth
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -56,7 +54,6 @@ export const signUpUser = async (
         role: role
       });
       
-      // Add role to user_roles table using raw query
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert([{ user_id: data.user.id, role: role }]);
@@ -64,11 +61,8 @@ export const signUpUser = async (
       if (roleError) {
         console.error("Error adding user role:", roleError);
         
-        // Xóa người dùng đã tạo vì không thể thêm vai trò
         if (data.user) {
           try {
-            // Admin function to delete the user - but this won't work with client API
-            // Thay vào đó, đăng xuất và ném lỗi
             await supabase.auth.signOut();
             throw roleError;
           } catch (deleteError) {
@@ -80,9 +74,7 @@ export const signUpUser = async (
         throw roleError;
       }
       
-      // Initialize profile or company record based on role
       if (role === 'candidate') {
-        // Create candidate profile
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{ 
@@ -92,12 +84,10 @@ export const signUpUser = async (
           
         if (profileError) {
           console.error("Error creating candidate profile:", profileError);
-          // Đăng xuất và ném lỗi khi không thể tạo profile
           await supabase.auth.signOut();
           throw profileError;
         }
       } else if (role === 'employer') {
-        // Create company profile
         const { error: companyError } = await supabase
           .from('companies')
           .insert([{ 
@@ -107,13 +97,11 @@ export const signUpUser = async (
           
         if (companyError) {
           console.error("Error creating company profile:", companyError);
-          // Đăng xuất và ném lỗi khi không thể tạo profile
           await supabase.auth.signOut();
           throw companyError;
         }
       }
       
-      // Send event to Zapier if configured
       try {
         await sendZapierEvent('user_registration', {
           user_id: data.user.id,
@@ -124,14 +112,12 @@ export const signUpUser = async (
         });
       } catch (zapierError) {
         console.error('Error sending registration event to Zapier:', zapierError);
-        // Non-critical error, don't throw
       }
     }
 
     return data;
   } catch (error) {
     console.error("Sign up error:", error);
-    // Đảm bảo người dùng được đăng xuất nếu có lỗi
     await supabase.auth.signOut();
     throw error;
   }
@@ -155,6 +141,97 @@ export const signInUser = async (email: string, password: string) => {
     return data;
   } catch (error) {
     console.error("Sign in error:", error);
+    throw error;
+  }
+};
+
+export const signInWithGoogle = async () => {
+  try {
+    console.log("Starting Google sign in");
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      console.error("Google sign in error:", error);
+      throw error;
+    }
+    
+    console.log("Google sign in initiated:", data);
+    return data;
+  } catch (error) {
+    console.error("Google sign in error:", error);
+    throw error;
+  }
+};
+
+export const handleAuthCallback = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error("Auth callback error:", error);
+      throw error;
+    }
+    
+    if (data.session?.user) {
+      const userId = data.session.user.id;
+      const userRole = await fetchUserRole(userId);
+      
+      if (!userRole) {
+        console.log("New user via social login, creating default profile");
+        
+        const role: UserRole = 'candidate';
+        
+        const fullName = data.session.user.user_metadata.full_name || 
+                         data.session.user.user_metadata.name || 
+                         'User';
+        
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert([{ user_id: userId, role: role }]);
+
+        if (roleError) {
+          console.error("Error adding user role for social login:", roleError);
+          await supabase.auth.signOut();
+          throw roleError;
+        }
+        
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{ 
+            id: userId, 
+            full_name: fullName,
+          }]);
+          
+        if (profileError) {
+          console.error("Error creating profile for social login:", profileError);
+          await supabase.auth.signOut();
+          throw profileError;
+        }
+        
+        try {
+          await sendZapierEvent('user_registration', {
+            user_id: userId,
+            email: data.session.user.email,
+            full_name: fullName,
+            role: role,
+            registration_date: new Date().toISOString(),
+            provider: 'google',
+          });
+        } catch (zapierError) {
+          console.error('Error sending registration event to Zapier:', zapierError);
+        }
+      }
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Handle auth callback error:", error);
     throw error;
   }
 };

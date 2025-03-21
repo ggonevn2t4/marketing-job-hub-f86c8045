@@ -1,7 +1,7 @@
 
 import type { User, Session } from '@supabase/supabase-js';
 
-export type UserRole = 'candidate' | 'employer';
+export type UserRole = 'admin' | 'candidate' | 'employer';
 
 export interface AuthContextType {
   user: User | null;
@@ -10,7 +10,8 @@ export interface AuthContextType {
   isLoading: boolean;
   signUp: (email: string, password: string, fullName: string, role: UserRole) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
+  signInWithSocial: (provider: 'google') => Promise<void>;
+  processAuthCallback: () => Promise<void>;
   signOut: (redirectPath?: string) => Promise<void>;
-  // Keep backward compatibility with 'logout'
   logout: (redirectPath?: string) => Promise<void>;
 }
