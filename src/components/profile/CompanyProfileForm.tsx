@@ -1,3 +1,4 @@
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -55,6 +56,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
     },
   });
 
+  // Define the type that includes the transformed values from the schema
   type FormValues = z.output<typeof formSchema>;
 
   const handleSubmit = (data: FormValues) => {
