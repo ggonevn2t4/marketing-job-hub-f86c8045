@@ -2,6 +2,7 @@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { Search } from 'lucide-react';
 
 interface CandidateFiltersProps {
   searchTerm: string;
@@ -28,12 +29,14 @@ const CandidateFilters = ({
     <Card className="mb-6">
       <CardContent className="pt-6">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 relative">
             <Input
               placeholder="Tìm kiếm theo tên, email, thông tin..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10"
             />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
           </div>
           
           <div className="flex items-center gap-2">
@@ -67,12 +70,14 @@ const CandidateFilters = ({
           </div>
         </div>
         
-        <div className="mt-4">
+        <div className="mt-4 relative">
           <Input
             placeholder="Kỹ năng (ví dụ: Marketing, SEO, Content Writing...)"
             value={filterSkill}
             onChange={(e) => onSkillChange(e.target.value)}
+            className="pl-10"
           />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
         </div>
       </CardContent>
     </Card>
