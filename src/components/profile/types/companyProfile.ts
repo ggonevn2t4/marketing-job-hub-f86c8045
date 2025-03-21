@@ -13,7 +13,6 @@ export const companyFormSchema = z.object({
     .refine(val => !val || !isNaN(parseInt(val)), {
       message: 'Năm thành lập phải là số'
     })
-    .transform(val => val ? parseInt(val) : undefined)
     .optional(),
 });
 
