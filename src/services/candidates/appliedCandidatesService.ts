@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { CandidateWithStatus } from '@/types/candidate';
-import { ApplicationRecord } from '@/types/candidateManagement';
 
 export const fetchAppliedCandidates = async (userId: string) => {
   try {
@@ -27,33 +26,35 @@ export const fetchAppliedCandidates = async (userId: string) => {
     
     const jobIds = jobs.map(job => job.id);
     
-    // Get applications for these jobs without trying to join profiles
-    const { data: applications, error } = await supabase
+    // Get applications for these jobs
+    const { data: applications, error: applicationsError } = await supabase
       .from('job_applications')
       .select('id, email, status, job_id')
       .in('job_id', jobIds);
     
-    if (error) throw error;
+    if (applicationsError) throw applicationsError;
     if (!applications || applications.length === 0) return [];
     
     // Process each application separately to build candidates array
     const candidates: CandidateWithStatus[] = [];
     
     for (const application of applications) {
-      // We don't have profile IDs directly, so we'll need to work with what we have
-      // For each application, try to find a profile with matching email
       if (!application.email) continue;
       
+      // Extract username from email to use as profile ID (this is just an example approach)
+      const potentialUserId = application.email.split('@')[0];
+      
+      // Try to find corresponding profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', application.email.split('@')[0])
+        .eq('id', potentialUserId)
         .maybeSingle();
       
       if (profileError || !profile) {
-        // Create a minimal candidate with just email and status
+        // Create minimal candidate with just application data
         candidates.push({
-          id: application.id, // Using application ID as fallback
+          id: application.id,
           full_name: application.email.split('@')[0] || 'Unknown',
           email: application.email,
           status: application.status || 'pending',
@@ -91,8 +92,8 @@ export const fetchAppliedCandidates = async (userId: string) => {
         .select('id, institution, degree, field_of_study, start_date, end_date')
         .eq('user_id', profile.id);
       
-      // Create the candidate object with all data
-      const candidate: CandidateWithStatus = {
+      // Create candidate object with all data
+      candidates.push({
         id: profile.id,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
@@ -109,9 +110,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
         skills: skills || [],
         experience: experience || [],
         education: education || []
-      };
-      
-      candidates.push(candidate);
+      });
     }
     
     return candidates;

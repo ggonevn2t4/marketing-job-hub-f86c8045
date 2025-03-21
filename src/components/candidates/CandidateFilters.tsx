@@ -3,6 +3,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
 
 interface CandidateFiltersProps {
   searchTerm: string;
@@ -25,6 +33,24 @@ const CandidateFilters = ({
   filterExperience,
   onExperienceChange
 }: CandidateFiltersProps) => {
+  // Các địa điểm để chọn
+  const locations = [
+    { value: "", label: "Tất cả địa điểm" },
+    { value: "Hà Nội", label: "Hà Nội" },
+    { value: "Hồ Chí Minh", label: "Hồ Chí Minh" },
+    { value: "Đà Nẵng", label: "Đà Nẵng" }
+  ];
+
+  // Các mức kinh nghiệm để chọn
+  const experiences = [
+    { value: "", label: "Tất cả kinh nghiệm" },
+    { value: "0", label: "Không có kinh nghiệm" },
+    { value: "1", label: "Ít nhất 1 năm" },
+    { value: "2", label: "Ít nhất 2 năm" },
+    { value: "3", label: "Ít nhất 3 năm" },
+    { value: "5", label: "Ít nhất 5 năm" }
+  ];
+
   return (
     <Card className="mb-6">
       <CardContent className="pt-6">
@@ -40,33 +66,47 @@ const CandidateFilters = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <Select value={filterLocation} onValueChange={onLocationChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Địa điểm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Tất cả địa điểm</SelectItem>
-                <SelectItem value="Hà Nội">Hà Nội</SelectItem>
-                <SelectItem value="Hồ Chí Minh">Hồ Chí Minh</SelectItem>
-                <SelectItem value="Đà Nẵng">Đà Nẵng</SelectItem>
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {filterLocation ? locations.find(loc => loc.value === filterLocation)?.label : "Địa điểm"}
+                  <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-52">
+                {locations.map((location) => (
+                  <DropdownMenuItem 
+                    key={location.value} 
+                    onClick={() => onLocationChange(location.value)}
+                    className={filterLocation === location.value ? "bg-muted" : ""}
+                  >
+                    {location.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div className="flex items-center gap-2">
-            <Select value={filterExperience} onValueChange={onExperienceChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Kinh nghiệm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Tất cả kinh nghiệm</SelectItem>
-                <SelectItem value="0">Không có kinh nghiệm</SelectItem>
-                <SelectItem value="1">Ít nhất 1 năm</SelectItem>
-                <SelectItem value="2">Ít nhất 2 năm</SelectItem>
-                <SelectItem value="3">Ít nhất 3 năm</SelectItem>
-                <SelectItem value="5">Ít nhất 5 năm</SelectItem>
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {filterExperience ? experiences.find(exp => exp.value === filterExperience)?.label : "Kinh nghiệm"}
+                  <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-52">
+                {experiences.map((experience) => (
+                  <DropdownMenuItem 
+                    key={experience.value} 
+                    onClick={() => onExperienceChange(experience.value)}
+                    className={filterExperience === experience.value ? "bg-muted" : ""}
+                  >
+                    {experience.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         

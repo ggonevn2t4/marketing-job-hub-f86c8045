@@ -15,4 +15,5 @@ export interface ApplicationRecord {
   status: string;
   email?: string;
   profile_id?: string;
+  created_at?: string;
 }
