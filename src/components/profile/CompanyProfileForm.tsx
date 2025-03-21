@@ -1,4 +1,3 @@
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -57,7 +56,6 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
   });
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    // Here we need to convert founded_year back to number or null before sending to API
     onSubmit({
       name: data.name,
       website: data.website || null,

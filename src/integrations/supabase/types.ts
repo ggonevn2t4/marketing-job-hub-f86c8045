@@ -345,8 +345,10 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          portfolio_url: string | null
           resume_url: string | null
           updated_at: string
+          video_intro_url: string | null
         }
         Insert: {
           address?: string | null
@@ -357,8 +359,10 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
+          portfolio_url?: string | null
           resume_url?: string | null
           updated_at?: string
+          video_intro_url?: string | null
         }
         Update: {
           address?: string | null
@@ -369,8 +373,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          portfolio_url?: string | null
           resume_url?: string | null
           updated_at?: string
+          video_intro_url?: string | null
         }
         Relationships: []
       }
