@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { CandidateProfile, Education, Experience, Skill, CompanyProfile } from '@/types/profile';
 
@@ -48,6 +47,8 @@ export const fetchCandidateProfile = async (userId: string): Promise<CandidatePr
     console.error('Error fetching skills:', skillsError);
   }
 
+  // We need to check if portfolio_url and video_intro_url fields exist in the database
+  // If not, we need to add the columns to the profiles table
   return {
     ...profile,
     education: education || [],
@@ -55,7 +56,7 @@ export const fetchCandidateProfile = async (userId: string): Promise<CandidatePr
     skills: skills || [],
     portfolio_url: profile?.portfolio_url || null,
     video_intro_url: profile?.video_intro_url || null
-  };
+  } as CandidateProfile;
 };
 
 // Cập nhật thông tin cơ bản

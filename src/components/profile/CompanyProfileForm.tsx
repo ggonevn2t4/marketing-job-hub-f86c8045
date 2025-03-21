@@ -57,6 +57,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
   });
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
+    // Here we need to convert founded_year back to number or null before sending to API
     onSubmit({
       name: data.name,
       website: data.website || null,
@@ -64,7 +65,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       location: data.location || null,
       description: data.description || null,
       company_size: data.company_size || null,
-      founded_year: data.founded_year,
+      founded_year: data.founded_year !== undefined ? data.founded_year : null,
     });
   };
 
