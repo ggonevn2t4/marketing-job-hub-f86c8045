@@ -17,7 +17,7 @@ export const companyFormSchema = z.object({
     .optional(),
 });
 
-export type CompanyFormValues = z.output<typeof companyFormSchema>;
+export type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 export type CompanyProfileFormProps = {
   profile: CompanyProfile | null;
