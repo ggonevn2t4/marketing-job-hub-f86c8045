@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const fetchJobs = async (filters: {
@@ -16,45 +15,55 @@ export const fetchJobs = async (filters: {
     page = 1
   } = filters;
   
-  let query = supabase
-    .from('jobs')
-    .select(`
-      *,
-      companies:company_id(id, name, logo, location, industry),
-      categories:category_id(id, name, slug)
-    `)
-    .order('is_featured', { ascending: false })
-    .order('created_at', { ascending: false });
-  
-  // Apply filters
-  if (searchTerm) {
-    query = query.ilike('title', `%${searchTerm}%`);
-  }
-  
-  if (location && location !== 'all') {
-    query = query.eq('location', location);
-  }
-  
-  if (category && category !== 'all') {
-    query = query.eq('category_id', category);
-  }
-  
-  // Apply pagination
-  const from = (page - 1) * limit;
-  const to = from + limit - 1;
-  query = query.range(from, to);
-  
-  const { data, error, count } = await query;
-  
-  if (error) {
-    console.error('Error fetching jobs:', error);
+  try {
+    console.log('Building query with filters:', filters);
+    
+    let query = supabase
+      .from('jobs')
+      .select(`
+        *,
+        companies:company_id(id, name, logo, location, industry),
+        categories:category_id(id, name, slug)
+      `, { count: 'exact' })
+      .order('is_featured', { ascending: false })
+      .order('created_at', { ascending: false });
+    
+    // Apply filters
+    if (searchTerm) {
+      query = query.ilike('title', `%${searchTerm}%`);
+    }
+    
+    if (location && location !== 'all') {
+      query = query.eq('location', location);
+    }
+    
+    if (category && category !== 'all') {
+      query = query.eq('category_id', category);
+    }
+    
+    // Apply pagination
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+    
+    console.log('Executing Supabase query');
+    const { data, error, count } = await query;
+    
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+    
+    console.log('Query successful, data:', data?.length || 0, 'items, count:', count);
+    
+    return { 
+      jobs: data || [], 
+      count 
+    };
+  } catch (error) {
+    console.error('Error in fetchJobs:', error);
     throw error;
   }
-  
-  return { 
-    jobs: data || [], 
-    count 
-  };
 };
 
 export const fetchCategories = async () => {

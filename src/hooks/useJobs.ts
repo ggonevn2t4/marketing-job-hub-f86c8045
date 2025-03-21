@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchJobs } from '@/utils/supabaseQueries';
+import { toast } from '@/components/ui/use-toast';
 
 type JobFilters = {
   searchTerm?: string;
@@ -36,7 +37,9 @@ export const useJobs = (initialFilters: JobFilters = {}) => {
     const getJobs = async () => {
       try {
         setLoading(true);
+        console.log('Fetching jobs with filters:', filters);
         const { jobs: fetchedJobs, count } = await fetchJobs(filters);
+        console.log('Fetched jobs:', fetchedJobs, 'count:', count);
         
         if (filters.page && filters.page > 1) {
           setJobs(prev => [...prev, ...fetchedJobs]);
@@ -47,7 +50,13 @@ export const useJobs = (initialFilters: JobFilters = {}) => {
         setTotalCount(count || 0);
         setError(null);
       } catch (err) {
+        console.error('Error fetching jobs:', err);
         setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải danh sách việc làm. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
       } finally {
         setLoading(false);
       }

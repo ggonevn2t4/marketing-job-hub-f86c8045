@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +34,6 @@ const Jobs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
-  // Parse search parameters
   const keyword = searchParams.get('q') || '';
   const location = searchParams.get('location') || '';
   const category = searchParams.get('category') || '';
@@ -48,7 +46,6 @@ const Jobs = () => {
   const pageParam = searchParams.get('page');
   const sortParam = searchParams.get('sort') || 'recent';
   
-  // Set current page and sort from URL params
   useEffect(() => {
     if (pageParam) {
       setCurrentPage(parseInt(pageParam));
@@ -72,7 +69,6 @@ const Jobs = () => {
     }
   }, [user]);
   
-  // Fetch categories để hiển thị tên danh mục
   useEffect(() => {
     const getCategories = async () => {
       try {
@@ -89,9 +85,9 @@ const Jobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
+        console.log('Starting job fetch process...');
         setLoading(true);
         
-        // Start building the query
         let query = supabase
           .from('jobs')
           .select(`
@@ -109,7 +105,11 @@ const Jobs = () => {
             company:company_id (id, name, logo)
           `, { count: 'exact' });
         
-        // Add filters based on search parameters
+        console.log('Building query with params:', { 
+          keyword, location, category, jobType, 
+          experienceLevel, featuredOnly, currentPage
+        });
+        
         if (keyword) {
           query = query.or(`title.ilike.%${keyword}%,description.ilike.%${keyword}%`);
         }
@@ -122,7 +122,6 @@ const Jobs = () => {
           query = query.eq('category_id', category);
         }
         
-        // Add advanced filters
         if (jobType) {
           query = query.eq('job_type', jobType);
         }
@@ -131,12 +130,10 @@ const Jobs = () => {
           query = query.eq('experience_level', experienceLevel);
         }
         
-        // Xử lý filter theo mức lương 
         if (salaryRange) {
           const minSalary = `${salaryRange[0]} triệu`;
           const maxSalary = `${salaryRange[1]} triệu`;
           
-          // Tìm các công việc có mức lương trong khoảng chỉ định
           query = query.or(`salary.ilike.%${minSalary}%,salary.ilike.%${maxSalary}%`);
         } else if (salary) {
           query = query.ilike('salary', `%${salary}%`);
@@ -146,20 +143,16 @@ const Jobs = () => {
           query = query.eq('is_featured', true);
         }
         
-        // Calculate pagination
         const from = (currentPage - 1) * itemsPerPage;
         const to = from + itemsPerPage - 1;
         
-        // Apply sorting
         switch (sortBy) {
           case 'featured':
             query = query.order('is_featured', { ascending: false })
                          .order('created_at', { ascending: false });
             break;
           case 'relevant':
-            // For relevance sorting, we prioritize keyword matches in title
             if (keyword) {
-              // Custom relevance is handled after fetching data
               query = query.order('is_featured', { ascending: false });
             } else {
               query = query.order('is_featured', { ascending: false })
@@ -172,20 +165,24 @@ const Jobs = () => {
             break;
         }
         
-        // Apply pagination
         query = query.range(from, to);
         
+        console.log('Executing query...');
         const { data, count, error } = await query;
         
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase query error:', error);
+          throw error;
+        }
+        
+        console.log('Jobs fetched successfully:', data?.length || 0, 'count:', count);
         
         if (data) {
-          // Format data for JobList component
           let formattedJobs = data.map(job => ({
             id: job.id,
             title: job.title,
-            company: job.company.name,
-            logo: job.company.logo || '/placeholder.svg',
+            company: job.company?.name || 'Unknown Company',
+            logo: job.company?.logo || '/placeholder.svg',
             location: job.location,
             salary: job.salary,
             jobType: job.job_type,
@@ -196,23 +193,18 @@ const Jobs = () => {
             isUrgent: job.is_urgent
           }));
           
-          // Additional relevance sorting if keyword is present and sort is by relevant
           if (keyword && sortBy === 'relevant') {
             formattedJobs = formattedJobs.sort((a, b) => {
-              // Check if title contains keyword (case insensitive)
               const aTitle = a.title.toLowerCase();
               const bTitle = b.title.toLowerCase();
               const keywordLower = keyword.toLowerCase();
               
-              // If one title contains the keyword and the other doesn't
               if (aTitle.includes(keywordLower) && !bTitle.includes(keywordLower)) return -1;
               if (!aTitle.includes(keywordLower) && bTitle.includes(keywordLower)) return 1;
               
-              // If one title starts with the keyword
               if (aTitle.startsWith(keywordLower) && !bTitle.startsWith(keywordLower)) return -1;
               if (!aTitle.startsWith(keywordLower) && bTitle.startsWith(keywordLower)) return 1;
               
-              // Featured jobs get priority when other factors are equal
               if (a.isFeatured && !b.isFeatured) return -1;
               if (!a.isFeatured && b.isFeatured) return 1;
               
@@ -220,6 +212,7 @@ const Jobs = () => {
             });
           }
           
+          console.log('Setting jobs state with formatted data');
           setJobs(formattedJobs);
           setTotalJobs(count || 0);
         }
@@ -262,11 +255,9 @@ const Jobs = () => {
   const handleFilterChange = (newFilters: any) => {
     const updatedParams = new URLSearchParams(searchParams);
     
-    // Cập nhật URL parameters với các filter mới
     Object.entries(newFilters).forEach(([key, value]) => {
       if (value) {
         if (key === 'salaryRange') {
-          // Lưu salaryRange dưới dạng chuỗi JSON trong URL
           updatedParams.set(key, JSON.stringify(value));
         } else {
           updatedParams.set(key, String(value));
@@ -276,7 +267,6 @@ const Jobs = () => {
       }
     });
     
-    // Reset to page 1 when filters change
     updatedParams.set('page', '1');
     setCurrentPage(1);
     
@@ -310,14 +300,11 @@ const Jobs = () => {
     setCurrentPage(page);
     setSearchParams(updatedParams);
     
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  // Create title based on search parameters
   let title = 'Tất cả việc làm';
   if (category) {
-    // Tìm tên danh mục từ ID
     const categoryObj = categories.find(cat => cat.id === category);
     if (categoryObj) {
       title = `Việc làm ${categoryObj.name}`;
@@ -327,7 +314,6 @@ const Jobs = () => {
     title = `Kết quả tìm kiếm cho "${keyword}"`;
   }
   
-  // Calculate total pages for pagination
   const totalPages = Math.ceil(totalJobs / itemsPerPage);
   
   return (
@@ -411,19 +397,14 @@ const Jobs = () => {
                   </PaginationItem>
                   
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    // Display pages around current page
                     let pageNum: number;
                     if (totalPages <= 5) {
-                      // If 5 or fewer pages, show all
                       pageNum = i + 1;
                     } else if (currentPage <= 3) {
-                      // Near start
                       pageNum = i + 1;
                     } else if (currentPage >= totalPages - 2) {
-                      // Near end
                       pageNum = totalPages - 4 + i;
                     } else {
-                      // In middle
                       pageNum = currentPage - 2 + i;
                     }
                     

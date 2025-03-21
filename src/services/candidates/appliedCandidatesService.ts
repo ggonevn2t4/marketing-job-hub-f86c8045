@@ -41,17 +41,19 @@ export const fetchAppliedCandidates = async (userId: string) => {
     for (const application of applications) {
       if (!application.email) continue;
       
-      // Extract username from email to use as profile ID (this is just an example approach)
-      const potentialUserId = application.email.split('@')[0];
+      // Split query to avoid circular type references
+      const profileEmail = application.email;
       
-      // Try to find corresponding profile
-      const { data: profile, error: profileError } = await supabase
+      // Fetch profile directly using the email
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', potentialUserId)
+        .eq('id', profileEmail.split('@')[0]) // This is just an example approach
         .maybeSingle();
       
-      if (profileError || !profile) {
+      const profile = profileData || null;
+      
+      if (!profile) {
         // Create minimal candidate with just application data
         candidates.push({
           id: application.id,
@@ -74,7 +76,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
         continue;
       }
       
-      // Fetch skills for this profile
+      // Fetch skills for this profile - separate queries to avoid circular references
       const { data: skills } = await supabase
         .from('skills')
         .select('id, name')
