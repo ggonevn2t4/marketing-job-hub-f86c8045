@@ -1,167 +1,160 @@
 
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Building, Clock, Briefcase, Bookmark } from 'lucide-react';
+import { 
+  Building, 
+  MapPin, 
+  Calendar, 
+  DollarSign, 
+  Briefcase, 
+  Award,
+  Eye
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import useBookmarkJob from '@/hooks/useBookmarkJob';
-import { useEffect } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent } from '@/components/ui/card';
 
 export interface JobProps {
   id: string;
   title: string;
-  company: string;
-  logo: string;
+  company_name: string;
+  company_logo?: string;
   location: string;
-  salary: string;
-  jobType: string;
-  experienceLevel: string;
-  postedAt: string;
-  isFeatured?: boolean;
-  isHot?: boolean;
-  isUrgent?: boolean;
-  showBookmark?: boolean;
+  job_type: string;
+  experience_level?: string;
+  salary?: string;
+  created_at: string;
+  is_featured?: boolean;
+  is_hot?: boolean;
+  is_urgent?: boolean;
+  description?: string;
+  company_id?: string;
+  views?: number;
+  category_name?: string;
 }
 
-const JobCard = ({
-  id,
-  title,
-  company,
-  logo,
-  location,
+const JobCard = ({ 
+  id, 
+  title, 
+  company_name, 
+  company_logo, 
+  location, 
+  job_type, 
+  experience_level,
   salary,
-  jobType,
-  experienceLevel,
-  postedAt,
-  isFeatured = false,
-  isHot = false,
-  isUrgent = false,
-  showBookmark = true,
+  created_at,
+  is_featured,
+  is_hot,
+  is_urgent,
+  views
 }: JobProps) => {
-  const { user } = useAuth();
-  const { savedJobs, fetchSavedJobs, saveJob, unsaveJob, isJobSaved } = useBookmarkJob();
-  const isMobile = useIsMobile();
-  
-  useEffect(() => {
-    if (user && showBookmark) {
-      fetchSavedJobs();
-    }
-  }, [user, showBookmark, fetchSavedJobs]);
-  
-  const handleBookmarkClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const timeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
     
-    if (isJobSaved(id)) {
-      await unsaveJob(id);
-    } else {
-      await saveJob(id);
-    }
+    if (diffInDays === 0) return 'Hôm nay';
+    if (diffInDays === 1) return 'Hôm qua';
+    if (diffInDays < 7) return `${diffInDays} ngày trước`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} tuần trước`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} tháng trước`;
+    return `${Math.floor(diffInDays / 365)} năm trước`;
   };
-  
+
   return (
-    <Link to={`/jobs/${id}`}>
-      <Card className={cn(
-        'overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30 group',
-        isFeatured && 'border-primary/30 bg-primary/5'
-      )}>
-        <CardContent className={cn("p-5", isMobile && "p-4")}>
-          <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 border">
-              <img src={logo} alt={company} className="w-full h-full object-cover" />
+    <Card className={`border overflow-hidden transition-all hover:border-primary/50 hover:shadow-sm ${is_featured ? 'ring-1 ring-primary/30 bg-primary/5' : ''}`}>
+      <CardContent className="p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-md overflow-hidden border bg-gray-100 flex-shrink-0">
+            {company_logo ? (
+              <img src={company_logo} alt={company_name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium text-sm">
+                {company_name.charAt(0)}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-lg truncate">
+                <Link to={`/jobs/${id}`} className="hover:text-primary transition-colors">
+                  {title}
+                </Link>
+              </h3>
+              
+              <div className="flex gap-1 flex-wrap">
+                {is_hot && (
+                  <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-xs">
+                    Hot
+                  </Badge>
+                )}
+                {is_urgent && (
+                  <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20 text-xs">
+                    Gấp
+                  </Badge>
+                )}
+                {is_featured && (
+                  <Badge variant="secondary" className="text-xs px-2 py-0 h-5">
+                    Nổi bật
+                  </Badge>
+                )}
+              </div>
             </div>
             
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-semibold text-lg leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-1">
-                    {title}
-                  </h3>
-                  <div className="text-muted-foreground flex items-center gap-1">
-                    <Building size={14} className="flex-shrink-0" />
-                    <span className="truncate">{company}</span>
-                  </div>
+            <div className="text-muted-foreground flex items-center gap-2 mb-3">
+              <Building size={14} />
+              <span className="text-sm">{company_name}</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin size={14} />
+                <span>{location}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Briefcase size={14} />
+                <span>{job_type}</span>
+              </div>
+              
+              {experience_level && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Award size={14} />
+                  <span>{experience_level}</span>
                 </div>
+              )}
+              
+              {salary && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <DollarSign size={14} />
+                  <span>{salary}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar size={14} />
+                <span>{timeAgo(created_at)}</span>
                 
-                <div className="flex flex-wrap gap-2">
-                  {isFeatured && (
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                      Nổi bật
-                    </Badge>
-                  )}
-                  {isHot && (
-                    <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">
-                      Hot
-                    </Badge>
-                  )}
-                  {isUrgent && (
-                    <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
-                      Gấp
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              <div className={cn(
-                "mt-3 grid gap-2",
-                isMobile ? "grid-cols-1" : "grid-cols-2"
-              )}>
-                <div className="flex items-center text-sm text-muted-foreground gap-1">
-                  <MapPin size={14} className="flex-shrink-0" />
-                  <span className="truncate">{location}</span>
-                </div>
-                <div className="flex items-center text-sm text-muted-foreground gap-1">
-                  <Briefcase size={14} className="flex-shrink-0" />
-                  <span className="truncate">{experienceLevel}</span>
-                </div>
-              </div>
-              
-              <div className={cn(
-                "mt-3 pt-3 border-t", 
-                isMobile 
-                  ? "flex flex-col space-y-2" 
-                  : "flex flex-wrap items-center justify-between gap-y-2"
-              )}>
-                <div className="font-medium text-foreground">
-                  {salary}
-                </div>
-                <div className={cn(
-                  "flex items-center text-sm text-muted-foreground gap-2",
-                  isMobile && "justify-between"
-                )}>
-                  <Badge variant="secondary" className="font-normal">
-                    {jobType}
-                  </Badge>
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} />
-                    <span>{postedAt}</span>
+                {views !== undefined && (
+                  <div className="flex items-center gap-1 ml-3">
+                    <Eye size={14} />
+                    <span>{views} lượt xem</span>
                   </div>
-                  
-                  {showBookmark && user && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-full"
-                      onClick={handleBookmarkClick}
-                    >
-                      <Bookmark 
-                        size={16} 
-                        className={cn(
-                          isJobSaved(id) ? "fill-primary text-primary" : "text-muted-foreground"
-                        )} 
-                      />
-                    </Button>
-                  )}
-                </div>
+                )}
               </div>
+              
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/jobs/${id}`}>Xem chi tiết</Link>
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
