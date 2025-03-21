@@ -52,7 +52,7 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       location: profile?.location || '',
       description: profile?.description || '',
       company_size: profile?.company_size || '',
-      founded_year: profile?.founded_year ? profile.founded_year.toString() : '',
+      founded_year: profile?.founded_year ? String(profile.founded_year) : '',
     },
   });
 

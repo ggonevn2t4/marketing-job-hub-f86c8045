@@ -52,7 +52,9 @@ export const fetchCandidateProfile = async (userId: string): Promise<CandidatePr
     ...profile,
     education: education || [],
     experience: experience || [],
-    skills: skills || []
+    skills: skills || [],
+    portfolio_url: profile?.portfolio_url || null,
+    video_intro_url: profile?.video_intro_url || null
   };
 };
 
