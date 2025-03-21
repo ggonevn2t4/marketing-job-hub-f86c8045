@@ -585,7 +585,10 @@ const JobDetail = () => {
             </div>
             
             <JobApplicationForm 
-              job={{id: job.id, title: job.title}}
+              job={{
+                id: job.id,
+                title: job.title
+              }}
               onSuccess={() => {
                 showToast({
                   title: "Thành công!",

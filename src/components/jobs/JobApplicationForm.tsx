@@ -19,7 +19,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Job } from '@/types/job';
+
+// Define a simplified Job interface for the props
+interface JobProps {
+  id: string;
+  title: string;
+}
 
 const formSchema = z.object({
   full_name: z.string().min(2, {
@@ -36,10 +41,11 @@ const formSchema = z.object({
 });
 
 interface JobApplicationFormProps {
-  job: Job;
+  job: JobProps;
+  onSuccess?: () => void;
 }
 
-const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job }) => {
+const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job, onSuccess }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -62,9 +68,14 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job }) => {
       return;
     }
 
+    // Ensure required fields are present
     const formData = {
-      ...values,
       job_id: job.id,
+      full_name: values.full_name,
+      email: values.email,
+      phone: values.phone,
+      cover_letter: values.cover_letter,
+      resume_url: values.resume_url,
     };
 
     try {
@@ -82,7 +93,12 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({ job }) => {
         description: 'Your application has been submitted successfully!',
       });
 
-      navigate('/application-tracker');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/application-tracker');
+      }
+      
       try {
         await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notifications`, {
           method: 'POST',

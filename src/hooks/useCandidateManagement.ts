@@ -48,8 +48,6 @@ export const useCandidateManagement = () => {
     try {
       setIsLoading(true);
       
-      // In a real application, this would be filtered by various criteria
-      // Here we're just getting all profiles with type 'candidate'
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -62,16 +60,30 @@ export const useCandidateManagement = () => {
       
       if (error) throw error;
 
-      // Fetch user emails from auth.users via a service function or stored in profiles
-      // This is a simplified approach, in a real app you might store email in profiles directly
-      const candidatesWithEmail = await Promise.all((data || []).map(async (candidate) => {
-        // We would normally get this from auth.users, but for this example we'll just set a dummy email
-        return {
-          ...candidate,
+      // Process data with type safety
+      const candidatesWithEmail = (data || []).map(candidate => {
+        // Create a properly typed candidate object
+        const typedCandidate: CandidateWithStatus = {
+          id: candidate.id,
+          full_name: candidate.full_name,
+          avatar_url: candidate.avatar_url,
+          phone: candidate.phone,
+          bio: candidate.bio,
+          address: candidate.address,
+          date_of_birth: candidate.date_of_birth,
+          resume_url: candidate.resume_url,
+          portfolio_url: candidate.portfolio_url,
+          video_intro_url: candidate.video_intro_url,
+          created_at: candidate.created_at,
           email: `${candidate.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-          status: 'active' // Default status
-        } as CandidateWithStatus;
-      }));
+          status: 'active',
+          skills: Array.isArray(candidate.skills) ? candidate.skills : [],
+          experience: Array.isArray(candidate.experience) ? candidate.experience : [],
+          education: Array.isArray(candidate.education) ? candidate.education : []
+        };
+        
+        return typedCandidate;
+      });
       
       setAllCandidates(candidatesWithEmail);
     } catch (error) {
@@ -109,11 +121,28 @@ export const useCandidateManagement = () => {
       const candidates = (data || []).map(item => {
         if (!item.candidate) return null;
         const candidate = item.candidate as any;
-        return {
-          ...candidate,
+        
+        // Create a properly typed candidate object
+        const typedCandidate: CandidateWithStatus = {
+          id: candidate.id,
+          full_name: candidate.full_name,
+          avatar_url: candidate.avatar_url,
+          phone: candidate.phone,
+          bio: candidate.bio,
+          address: candidate.address,
+          date_of_birth: candidate.date_of_birth,
+          resume_url: candidate.resume_url,
+          portfolio_url: candidate.portfolio_url,
+          video_intro_url: candidate.video_intro_url,
+          created_at: candidate.created_at,
           email: `${candidate.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-          status: 'saved' // Default status for saved candidates
-        } as CandidateWithStatus;
+          status: 'saved',
+          skills: Array.isArray(candidate.skills) ? candidate.skills : [],
+          experience: Array.isArray(candidate.experience) ? candidate.experience : [],
+          education: Array.isArray(candidate.education) ? candidate.education : []
+        };
+        
+        return typedCandidate;
       }).filter(Boolean) as CandidateWithStatus[];
       
       setSavedCandidates(candidates);
@@ -163,24 +192,37 @@ export const useCandidateManagement = () => {
       if (error) throw error;
       
       // Extract unique profiles from applications and add email and status
-      const uniqueProfiles = new Map();
+      const uniqueProfiles = new Map<string, CandidateWithStatus>();
       
       applications?.forEach(app => {
         if (app.profiles) {
           const profile = app.profiles as any;
           
-          // Add email and application status
+          // Create a properly typed candidate object
           const enrichedProfile: CandidateWithStatus = {
-            ...profile,
+            id: profile.id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            phone: profile.phone,
+            bio: profile.bio,
+            address: profile.address,
+            date_of_birth: profile.date_of_birth,
+            resume_url: profile.resume_url,
+            portfolio_url: profile.portfolio_url,
+            video_intro_url: profile.video_intro_url,
+            created_at: profile.created_at,
             email: app.email || `${profile.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-            status: app.status || 'pending'
+            status: app.status || 'pending',
+            skills: Array.isArray(profile.skills) ? profile.skills : [],
+            experience: Array.isArray(profile.experience) ? profile.experience : [],
+            education: Array.isArray(profile.education) ? profile.education : []
           };
           
           uniqueProfiles.set(profile.id, enrichedProfile);
         }
       });
       
-      setAppliedCandidates(Array.from(uniqueProfiles.values()) as CandidateWithStatus[]);
+      setAppliedCandidates(Array.from(uniqueProfiles.values()));
     } catch (error) {
       console.error('Error fetching applied candidates:', error);
     }
@@ -282,7 +324,59 @@ export const useCandidateManagement = () => {
     setFilterLocation,
     filterExperience,
     setFilterExperience,
-    updateCandidateStatus,
+    updateCandidateStatus: async (candidateId: string, status: string) => {
+      try {
+        setAllCandidates(prev => 
+          prev.map(candidate => 
+            candidate.id === candidateId 
+              ? { ...candidate, status } 
+              : candidate
+          )
+        );
+        
+        setSavedCandidates(prev => 
+          prev.map(candidate => 
+            candidate.id === candidateId 
+              ? { ...candidate, status } 
+              : candidate
+          )
+        );
+        
+        setAppliedCandidates(prev => 
+          prev.map(candidate => 
+            candidate.id === candidateId 
+              ? { ...candidate, status } 
+              : candidate
+          )
+        );
+        
+        // Notify the candidate about the status change
+        try {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notifications`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              action: 'application_update',
+              data: {
+                applicationId: candidateId, // Using candidate ID for simplicity
+                status,
+                candidateId,
+              },
+            }),
+          });
+        } catch (error) {
+          console.error('Error sending status update notification:', error);
+        }
+        
+        return Promise.resolve();
+      } catch (error) {
+        console.error('Error updating candidate status:', error);
+        return Promise.reject(error);
+      }
+    },
     filterCandidates
   };
 };
