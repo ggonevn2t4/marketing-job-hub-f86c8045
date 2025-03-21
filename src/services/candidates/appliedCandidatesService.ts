@@ -41,14 +41,16 @@ export const fetchAppliedCandidates = async (userId: string) => {
     for (const application of applications) {
       if (!application.email) continue;
       
-      // Split query to avoid circular type references
+      // Get appropriate profile ID from email
+      // This approach avoids the circular type reference
       const profileEmail = application.email;
+      const profileId = profileEmail.split('@')[0]; // Simple approach for demo
       
-      // Fetch profile directly using the email
+      // Fetch profile directly using the constructed ID
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', profileEmail.split('@')[0]) // This is just an example approach
+        .eq('id', profileId)
         .maybeSingle();
       
       const profile = profileData || null;
@@ -57,8 +59,8 @@ export const fetchAppliedCandidates = async (userId: string) => {
         // Create minimal candidate with just application data
         candidates.push({
           id: application.id,
-          full_name: application.email.split('@')[0] || 'Unknown',
-          email: application.email,
+          full_name: profileEmail.split('@')[0] || 'Unknown',
+          email: profileEmail,
           status: application.status || 'pending',
           avatar_url: null,
           phone: null,
@@ -76,7 +78,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
         continue;
       }
       
-      // Fetch skills for this profile - separate queries to avoid circular references
+      // Fetch skills for this profile
       const { data: skills } = await supabase
         .from('skills')
         .select('id, name')
