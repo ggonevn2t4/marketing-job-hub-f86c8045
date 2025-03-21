@@ -34,7 +34,7 @@ export const fetchAllCandidates = async () => {
         date_of_birth: candidate.date_of_birth,
         resume_url: candidate.resume_url,
         portfolio_url: candidate.portfolio_url,
-        video_intro_url: candidate.video_url || candidate.video_intro_url,
+        video_intro_url: candidate.video_intro_url, // Fixed property name
         created_at: candidate.created_at,
         email: `${candidate.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
         status: 'active',
@@ -160,7 +160,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
         const experience = Array.isArray(profile.experience) ? profile.experience : [];
         const education = Array.isArray(profile.education) ? profile.education : [];
         
-        // Create a properly typed candidate object
+        // Create a properly typed candidate object with explicit typing for arrays to prevent deep type instantiation
         const enrichedProfile: CandidateWithStatus = {
           id: profile.id,
           full_name: profile.full_name,

@@ -16,9 +16,9 @@ export interface CandidateWithStatus {
   created_at: string;
   email?: string;
   status?: string;
-  skills?: any[];
-  experience?: any[];
-  education?: any[];
+  skills: any[];
+  experience: any[];
+  education: any[];
 }
 
 export interface CandidateFilters {
