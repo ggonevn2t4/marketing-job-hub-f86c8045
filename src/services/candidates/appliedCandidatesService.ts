@@ -27,41 +27,51 @@ export const fetchAppliedCandidates = async (userId: string) => {
     
     const jobIds = jobs.map(job => job.id);
     
-    // Get applications for these jobs - using simpler query to avoid type depth issues
+    // Get applications for these jobs without trying to join profiles
     const { data: applications, error } = await supabase
       .from('job_applications')
-      .select('id, email, status, job_id, profile_id:profiles(id)')
+      .select('id, email, status, job_id')
       .in('job_id', jobIds);
     
     if (error) throw error;
     if (!applications || applications.length === 0) return [];
     
-    // Get profile IDs from applications
-    const profileIds = applications
-      .map(app => app.profile_id?.id)
-      .filter(Boolean) as string[];
-    
-    if (profileIds.length === 0) return [];
-    
-    // Fetch profiles separately with a simpler query
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')
-      .in('id', profileIds);
-    
-    if (profilesError) throw profilesError;
-    if (!profiles) return [];
-    
-    // Construct candidates array with profile data
+    // Process each application separately to build candidates array
     const candidates: CandidateWithStatus[] = [];
     
-    for (const profile of profiles) {
-      // Find the corresponding application
-      const application = applications.find(
-        app => app.profile_id?.id === profile.id
-      );
+    for (const application of applications) {
+      // We don't have profile IDs directly, so we'll need to work with what we have
+      // For each application, try to find a profile with matching email
+      if (!application.email) continue;
       
-      if (!application) continue;
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', application.email.split('@')[0])
+        .maybeSingle();
+      
+      if (profileError || !profile) {
+        // Create a minimal candidate with just email and status
+        candidates.push({
+          id: application.id, // Using application ID as fallback
+          full_name: application.email.split('@')[0] || 'Unknown',
+          email: application.email,
+          status: application.status || 'pending',
+          avatar_url: null,
+          phone: null,
+          bio: null,
+          address: null,
+          date_of_birth: null,
+          resume_url: null,
+          portfolio_url: null,
+          video_intro_url: null,
+          created_at: new Date().toISOString(),
+          skills: [],
+          experience: [],
+          education: []
+        });
+        continue;
+      }
       
       // Fetch skills for this profile
       const { data: skills } = await supabase
@@ -94,7 +104,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
         portfolio_url: profile.portfolio_url,
         video_intro_url: profile.video_intro_url,
         created_at: profile.created_at,
-        email: application.email || `${profile.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+        email: application.email,
         status: application.status || 'pending',
         skills: skills || [],
         experience: experience || [],

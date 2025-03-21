@@ -14,7 +14,5 @@ export interface ApplicationRecord {
   job_id: string;
   status: string;
   email?: string;
-  profile_id?: {
-    id: string;
-  };
+  profile_id?: string;
 }
