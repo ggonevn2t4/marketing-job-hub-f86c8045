@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,8 +32,13 @@ const Auth = () => {
     setLoginError(null);
     try {
       await signIn(values.email, values.password);
+      toast({
+        title: "Đăng nhập thành công",
+        description: "Chào mừng bạn quay trở lại!",
+      });
     } catch (error: any) {
       console.error('Login error details:', error);
+      setLoginError(error.message || "Đã xảy ra lỗi khi đăng nhập");
     }
   };
 
@@ -42,8 +46,13 @@ const Auth = () => {
     setRegistrationError(null);
     try {
       await signUp(values.email, values.password, values.fullName, values.role);
+      toast({
+        title: "Đăng ký thành công",
+        description: "Tài khoản của bạn đã được tạo thành công!",
+      });
     } catch (error: any) {
       console.error('Registration error details:', error);
+      setRegistrationError(error.message || "Đã xảy ra lỗi khi đăng ký");
     }
   };
 
@@ -70,6 +79,11 @@ const Auth = () => {
       await signInWithSocial('google');
     } catch (error) {
       console.error('Google sign in error:', error);
+      toast({
+        variant: "destructive",
+        title: "Đăng nhập với Google thất bại",
+        description: "Có lỗi xảy ra khi đăng nhập với Google. Vui lòng thử lại.",
+      });
     }
   };
 
@@ -77,13 +91,13 @@ const Auth = () => {
     <Layout>
       <div className="container max-w-md py-16">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Đăng nhập</TabsTrigger>
-            <TabsTrigger value="register">Đăng ký</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="login" className="transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Đăng nhập</TabsTrigger>
+            <TabsTrigger value="register" className="transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Đăng ký</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="login">
-            <Card>
+          <TabsContent value="login" className="animate-fade-in">
+            <Card className="shadow-md border-opacity-50 transition-all hover:shadow-lg">
               <CardHeader>
                 <CardTitle>Đăng nhập</CardTitle>
                 <CardDescription>
@@ -100,15 +114,19 @@ const Auth = () => {
                 />
               </CardContent>
               <CardFooter className="flex justify-center">
-                <Button variant="link" onClick={() => setActiveTab('register')}>
+                <Button 
+                  variant="link" 
+                  onClick={() => setActiveTab('register')}
+                  className="transition-colors hover:text-primary"
+                >
                   Chưa có tài khoản? Đăng ký ngay
                 </Button>
               </CardFooter>
             </Card>
           </TabsContent>
           
-          <TabsContent value="register">
-            <Card>
+          <TabsContent value="register" className="animate-fade-in">
+            <Card className="shadow-md border-opacity-50 transition-all hover:shadow-lg">
               <CardHeader>
                 <CardTitle>Đăng ký tài khoản</CardTitle>
                 <CardDescription>
@@ -124,7 +142,11 @@ const Auth = () => {
                 />
               </CardContent>
               <CardFooter className="flex justify-center">
-                <Button variant="link" onClick={() => setActiveTab('login')}>
+                <Button 
+                  variant="link" 
+                  onClick={() => setActiveTab('login')}
+                  className="transition-colors hover:text-primary"
+                >
                   Đã có tài khoản? Đăng nhập
                 </Button>
               </CardFooter>

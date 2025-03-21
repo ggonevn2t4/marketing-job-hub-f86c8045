@@ -2,6 +2,7 @@
 import { ForgotPasswordFormValues } from './ForgotPasswordForm';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CheckCircle2 } from 'lucide-react';
 
 interface ForgotPasswordDialogProps {
   isOpen: boolean;
@@ -30,7 +31,10 @@ const ForgotPasswordDialog = ({
         
         {resetRequestSent ? (
           <div className="py-6 text-center">
-            <p className="mb-4">Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn.</p>
+            <div className="flex justify-center mb-4">
+              <CheckCircle2 className="h-12 w-12 text-green-500 animate-fade-in" />
+            </div>
+            <p className="mb-4 font-medium">Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn.</p>
             <p className="text-sm text-muted-foreground">Vui lòng kiểm tra hộp thư đến và thư rác.</p>
           </div>
         ) : (

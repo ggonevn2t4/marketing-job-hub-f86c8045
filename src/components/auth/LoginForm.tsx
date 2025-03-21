@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Email không hợp lệ' }),
@@ -50,7 +51,15 @@ const LoginForm = ({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="you@example.com" {...field} />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="you@example.com" 
+                    className="pl-10 transition-all focus:border-primary" 
+                    disabled={isLoading}
+                    {...field} 
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -64,7 +73,16 @@ const LoginForm = ({
             <FormItem>
               <FormLabel>Mật khẩu</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••" {...field} />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="password" 
+                    placeholder="••••••" 
+                    className="pl-10 transition-all focus:border-primary" 
+                    disabled={isLoading}
+                    {...field} 
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -72,14 +90,21 @@ const LoginForm = ({
         />
         
         {loginError && (
-          <div className="text-destructive text-sm">{loginError}</div>
+          <Alert variant="destructive" className="animate-fade-in">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
         )}
         
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          className="w-full transition-all hover:bg-primary/90 hover:shadow-md" 
+          disabled={isLoading}
+        >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Đang xử lý...
+              Đang đăng nhập...
             </>
           ) : (
             'Đăng nhập'
@@ -89,8 +114,9 @@ const LoginForm = ({
         <Button 
           type="button" 
           variant="link" 
-          className="w-full p-0 h-auto font-normal text-sm"
+          className="w-full p-0 h-auto font-normal text-sm hover:text-primary transition-colors"
           onClick={onForgotPassword}
+          disabled={isLoading}
         >
           Quên mật khẩu?
         </Button>
@@ -111,7 +137,7 @@ const LoginForm = ({
         <div className="mt-4">
           <Button 
             variant="outline" 
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 transition-all hover:bg-accent/50 hover:border-primary"
             onClick={onGoogleSignIn}
             disabled={isLoading}
           >
