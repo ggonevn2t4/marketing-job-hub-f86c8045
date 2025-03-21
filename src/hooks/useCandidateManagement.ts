@@ -7,7 +7,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { CandidateProfile } from '@/types/profile';
 
 // Define a candidate interface that extends CandidateProfile with email and status
-export interface CandidateWithStatus extends Omit<CandidateProfile, 'skills' | 'experience' | 'education'> {
+export interface CandidateWithStatus {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  bio: string | null;
+  address: string | null;
+  date_of_birth: string | null;
+  resume_url: string | null;
+  portfolio_url: string | null;
+  video_intro_url: string | null;
+  created_at: string;
   email?: string;
   status?: string;
   skills?: any[];
@@ -62,6 +73,11 @@ export const useCandidateManagement = () => {
 
       // Process data with type safety
       const candidatesWithEmail = (data || []).map(candidate => {
+        // Handle potential null or undefined skills, experience, education
+        const skills = Array.isArray(candidate.skills) ? candidate.skills : [];
+        const experience = Array.isArray(candidate.experience) ? candidate.experience : [];
+        const education = Array.isArray(candidate.education) ? candidate.education : [];
+        
         // Create a properly typed candidate object
         const typedCandidate: CandidateWithStatus = {
           id: candidate.id,
@@ -77,9 +93,9 @@ export const useCandidateManagement = () => {
           created_at: candidate.created_at,
           email: `${candidate.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
           status: 'active',
-          skills: Array.isArray(candidate.skills) ? candidate.skills : [],
-          experience: Array.isArray(candidate.experience) ? candidate.experience : [],
-          education: Array.isArray(candidate.education) ? candidate.education : []
+          skills,
+          experience,
+          education
         };
         
         return typedCandidate;
@@ -122,6 +138,11 @@ export const useCandidateManagement = () => {
         if (!item.candidate) return null;
         const candidate = item.candidate as any;
         
+        // Handle potential null or undefined arrays
+        const skills = Array.isArray(candidate.skills) ? candidate.skills : [];
+        const experience = Array.isArray(candidate.experience) ? candidate.experience : [];
+        const education = Array.isArray(candidate.education) ? candidate.education : [];
+        
         // Create a properly typed candidate object
         const typedCandidate: CandidateWithStatus = {
           id: candidate.id,
@@ -137,9 +158,9 @@ export const useCandidateManagement = () => {
           created_at: candidate.created_at,
           email: `${candidate.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
           status: 'saved',
-          skills: Array.isArray(candidate.skills) ? candidate.skills : [],
-          experience: Array.isArray(candidate.experience) ? candidate.experience : [],
-          education: Array.isArray(candidate.education) ? candidate.education : []
+          skills,
+          experience,
+          education
         };
         
         return typedCandidate;
@@ -198,6 +219,11 @@ export const useCandidateManagement = () => {
         if (app.profiles) {
           const profile = app.profiles as any;
           
+          // Handle potential null or undefined arrays
+          const skills = Array.isArray(profile.skills) ? profile.skills : [];
+          const experience = Array.isArray(profile.experience) ? profile.experience : [];
+          const education = Array.isArray(profile.education) ? profile.education : [];
+          
           // Create a properly typed candidate object
           const enrichedProfile: CandidateWithStatus = {
             id: profile.id,
@@ -213,9 +239,9 @@ export const useCandidateManagement = () => {
             created_at: profile.created_at,
             email: app.email || `${profile.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             status: app.status || 'pending',
-            skills: Array.isArray(profile.skills) ? profile.skills : [],
-            experience: Array.isArray(profile.experience) ? profile.experience : [],
-            education: Array.isArray(profile.education) ? profile.education : []
+            skills,
+            experience,
+            education
           };
           
           uniqueProfiles.set(profile.id, enrichedProfile);
@@ -324,59 +350,7 @@ export const useCandidateManagement = () => {
     setFilterLocation,
     filterExperience,
     setFilterExperience,
-    updateCandidateStatus: async (candidateId: string, status: string) => {
-      try {
-        setAllCandidates(prev => 
-          prev.map(candidate => 
-            candidate.id === candidateId 
-              ? { ...candidate, status } 
-              : candidate
-          )
-        );
-        
-        setSavedCandidates(prev => 
-          prev.map(candidate => 
-            candidate.id === candidateId 
-              ? { ...candidate, status } 
-              : candidate
-          )
-        );
-        
-        setAppliedCandidates(prev => 
-          prev.map(candidate => 
-            candidate.id === candidateId 
-              ? { ...candidate, status } 
-              : candidate
-          )
-        );
-        
-        // Notify the candidate about the status change
-        try {
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-notifications`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({
-              action: 'application_update',
-              data: {
-                applicationId: candidateId, // Using candidate ID for simplicity
-                status,
-                candidateId,
-              },
-            }),
-          });
-        } catch (error) {
-          console.error('Error sending status update notification:', error);
-        }
-        
-        return Promise.resolve();
-      } catch (error) {
-        console.error('Error updating candidate status:', error);
-        return Promise.reject(error);
-      }
-    },
+    updateCandidateStatus,
     filterCandidates
   };
 };
