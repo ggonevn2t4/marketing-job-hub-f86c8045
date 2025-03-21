@@ -1,4 +1,3 @@
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -56,7 +55,9 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
     },
   });
 
-  const handleSubmit = (data: z.infer<typeof formSchema>) => {
+  type FormValues = z.output<typeof formSchema>;
+
+  const handleSubmit = (data: FormValues) => {
     onSubmit({
       name: data.name,
       website: data.website || null,
@@ -64,7 +65,6 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       location: data.location || null,
       description: data.description || null,
       company_size: data.company_size || null,
-      // Here we use the transformed value which is already a number or undefined
       founded_year: data.founded_year ?? null,
     });
   };
