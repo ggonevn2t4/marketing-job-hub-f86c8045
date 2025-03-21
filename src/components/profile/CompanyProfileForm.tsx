@@ -64,7 +64,8 @@ const CompanyProfileForm = ({ profile, isLoading, onSubmit }: CompanyProfileForm
       location: data.location || null,
       description: data.description || null,
       company_size: data.company_size || null,
-      founded_year: data.founded_year || null,
+      // Here we use the transformed value which is already a number or undefined
+      founded_year: data.founded_year ?? null,
     });
   };
 
