@@ -35,7 +35,7 @@ const CategoryCard = ({
     <Link 
       to={`/jobs?${searchParams.toString()}`}
       className={cn(
-        'block bg-card rounded-xl border p-6 transition-all duration-300 hover:shadow-md hover:border-primary/30 group',
+        'block bg-card rounded-xl border p-6 transition-all duration-300 hover:shadow-md hover:border-primary/30 group touch-target',
         isMobile && 'p-4',
         className
       )}

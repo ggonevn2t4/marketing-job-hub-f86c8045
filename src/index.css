@@ -107,6 +107,22 @@
   .animate-smooth-appear {
     animation: smooth-appear 0.5s ease-out forwards;
   }
+  
+  /* New responsive breakpoints */
+  @media (max-width: 640px) {
+    h1 {
+      @apply text-2xl;
+    }
+    h2 {
+      @apply text-xl;
+    }
+    h3 {
+      @apply text-lg;
+    }
+    .container {
+      @apply px-4;
+    }
+  }
 }
 
 @layer components {
@@ -126,7 +142,7 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600;
   }
   
-  /* Mobile optimizations */
+  /* Enhanced mobile optimizations */
   .mobile-container {
     @apply px-4 sm:px-6 md:px-8;
   }
@@ -154,6 +170,41 @@
   .mobile-grid {
     @apply grid-cols-1 sm:grid-cols-2 md:grid-cols-3;
   }
+  
+  /* New touch-friendly components */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px]; /* Apple's recommended minimum touch target size */
+  }
+  
+  .mobile-menu-item {
+    @apply px-4 py-3 flex items-center gap-3 hover:bg-accent/50 rounded-lg transition-colors;
+  }
+  
+  .mobile-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t flex items-center justify-around py-2 px-1 z-50;
+  }
+  
+  .mobile-nav-item {
+    @apply flex flex-col items-center justify-center p-2 rounded-lg;
+  }
+  
+  /* Enhanced card appearance for mobile */
+  .card-mobile-friendly {
+    @apply px-4 py-3 sm:p-6;
+  }
+  
+  /* Improved form elements for touch */
+  .input-touch-friendly {
+    @apply h-12 sm:h-10 text-base px-4;
+  }
+  
+  .select-touch-friendly {
+    @apply h-12 sm:h-10 text-base;
+  }
+  
+  .button-touch-friendly {
+    @apply h-12 sm:h-10 text-base px-6;
+  }
 }
 
 /* Mobile-first media queries */
@@ -174,4 +225,62 @@
   .hidden-mobile {
     display: none;
   }
+  
+  /* Improved spacing for mobile */
+  .py-section {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  /* Adjust card padding */
+  .card {
+    padding: 1rem;
+  }
+  
+  /* Improve form readability */
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+  
+  /* Better table handling */
+  .mobile-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .py-section {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+  
+  .hidden-tablet {
+    display: none;
+  }
+}
+
+/* New responsive spacing utilities */
+.mx-responsive {
+  @apply mx-4 sm:mx-6 md:mx-8 lg:mx-12;
+}
+
+.my-responsive {
+  @apply my-4 sm:my-6 md:my-8 lg:my-12;
+}
+
+.p-responsive {
+  @apply p-4 sm:p-6 md:p-8 lg:p-12;
+}
+
+/* Touch-friendly scroll areas */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }

@@ -160,7 +160,7 @@ export const fetchAppliedCandidates = async (userId: string) => {
         const experience = Array.isArray(profile.experience) ? profile.experience : [];
         const education = Array.isArray(profile.education) ? profile.education : [];
         
-        // Create a properly typed candidate object with explicit typing for arrays to prevent deep type instantiation
+        // Use an explicitly typed CandidateWithStatus object to avoid deep type instantiation
         const enrichedProfile: CandidateWithStatus = {
           id: profile.id,
           full_name: profile.full_name,
@@ -175,9 +175,9 @@ export const fetchAppliedCandidates = async (userId: string) => {
           created_at: profile.created_at,
           email: app.email || `${profile.full_name?.toLowerCase().replace(/\s+/g, '.')}@example.com`,
           status: app.status || 'pending',
-          skills,
-          experience,
-          education
+          skills: skills as any[],
+          experience: experience as any[],
+          education: education as any[]
         };
         
         uniqueProfiles.set(profile.id, enrichedProfile);

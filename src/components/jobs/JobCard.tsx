@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface JobProps {
   id: string;
@@ -64,6 +65,8 @@ const JobCard = ({
   isUrgent,
   views
 }: JobProps) => {
+  const isMobile = useIsMobile();
+  
   // Use the alternative props if the original ones are not provided
   const displayCompanyName = company_name || company || '';
   const displayLogo = company_logo || logo;
@@ -90,9 +93,9 @@ const JobCard = ({
 
   return (
     <Card className={`border overflow-hidden transition-all hover:border-primary/50 hover:shadow-sm ${displayFeatured ? 'ring-1 ring-primary/30 bg-primary/5' : ''}`}>
-      <CardContent className="p-6">
+      <CardContent className={isMobile ? "p-4" : "p-6"}>
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-md overflow-hidden border bg-gray-100 flex-shrink-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden border bg-gray-100 flex-shrink-0">
             {displayLogo ? (
               <img src={displayLogo} alt={displayCompanyName} className="w-full h-full object-cover" />
             ) : (
@@ -103,14 +106,14 @@ const JobCard = ({
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-lg truncate">
+            <div className="flex items-start sm:items-center flex-col sm:flex-row sm:gap-2 mb-1">
+              <h3 className="font-semibold text-base sm:text-lg truncate w-full">
                 <Link to={`/jobs/${id}`} className="hover:text-primary transition-colors">
                   {title}
                 </Link>
               </h3>
               
-              <div className="flex gap-1 flex-wrap">
+              <div className="flex gap-1 flex-wrap mt-1 sm:mt-0">
                 {displayHot && (
                   <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-xs">
                     Hot
@@ -129,12 +132,12 @@ const JobCard = ({
               </div>
             </div>
             
-            <div className="text-muted-foreground flex items-center gap-2 mb-3">
+            <div className="text-muted-foreground flex items-center gap-2 mb-2 sm:mb-3">
               <Building size={14} />
               <span className="text-sm">{displayCompanyName}</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4">
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-y-1.5' : 'grid-cols-2 gap-x-4 gap-y-2'} text-sm mb-3 sm:mb-4`}>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MapPin size={14} />
                 <span>{location}</span>
@@ -160,8 +163,8 @@ const JobCard = ({
               )}
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className={`flex items-center ${isMobile ? 'flex-col gap-3' : 'justify-between'}`}>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground w-full">
                 <Calendar size={14} />
                 <span>{displayCreatedAt ? timeAgo(displayCreatedAt) : ''}</span>
                 
@@ -173,7 +176,7 @@ const JobCard = ({
                 )}
               </div>
               
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm" variant="outline" className={isMobile ? "w-full touch-target" : ""}>
                 <Link to={`/jobs/${id}`}>Xem chi tiết</Link>
               </Button>
             </div>
