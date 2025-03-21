@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -104,17 +103,14 @@ const Header = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      toast({
-        title: "Đăng xuất thành công!",
-        description: "Bạn đã đăng xuất khỏi tài khoản.",
-      });
+      await signOut('/auth');
       navigate('/auth');
     } catch (error: any) {
+      console.error("Error during sign out:", error);
       toast({
         variant: "destructive",
         title: "Đăng xuất thất bại",
-        description: error.message,
+        description: error.message || "Có lỗi xảy ra khi đăng xuất.",
       });
     }
   };
@@ -139,7 +135,6 @@ const Header = () => {
     }
   };
 
-  // Mobile navigation links
   const NavigationLinks = () => (
     <div className={cn("flex", isMobile ? "flex-col space-y-4" : "items-center space-x-4")}>
       <LinkButton to="/jobs">Việc làm</LinkButton>
@@ -148,7 +143,6 @@ const Header = () => {
     </div>
   );
 
-  // User menu content that's shared between mobile and desktop
   const UserMenuContent = () => (
     <>
       <div className="flex flex-col space-y-1">
@@ -172,7 +166,6 @@ const Header = () => {
     </>
   );
 
-  // Menu item component for both mobile and desktop menus
   const MenuItem = ({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) => (
     <Link to={to} className={cn(
       "flex items-center text-sm",
